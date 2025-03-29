@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "896422738232",
+    "project_id": "neuroapp-5d6c2",
+    "storage_bucket": "neuroapp-5d6c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:896422738232:android:8616fa1624ec55bc3aa9cd",
+        "android_client_info": {
+          "package_name": "com.example.neuro_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpCQ3BkXksF_gumfJohb26QKkkMojfnZc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
