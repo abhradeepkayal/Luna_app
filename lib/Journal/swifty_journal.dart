@@ -5,27 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-/// FirebaseService: Saves journal entries to Firestore.
-/// Update this as needed for your Firestore structure.
-class FirebaseService {
-  static Future<void> saveJournal(
-    String uid,
-    String journalType,
-    String content,
-    String date,
-  ) async {
-    await FirebaseFirestore.instance.collection('journals').add({
-      'uid': uid,
-      'journalType': journalType,
-      'content': content,
-      'date': date,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-  }
-}
-
-/// GeminiService: Uses Firebase Vertex AI to generate Sura's reply.
 class GeminiService {
   static const String _personaPrompt =
       "Sura is a light-hearted, cute and compassionate chatbot. She is not an assistant. She avoids factual topics and instead responds warmly, playfully or with humor. If the user asks anything boring or too serious, she gently changes the topic to something casual like 'How was your day?' or 'Tell me something fun!'\n\nYou are talking to Sura. Here's the message: ";
@@ -40,7 +22,6 @@ class GeminiService {
   }
 }
 
-/// SwiftyJournalPage: Chat UI with Sura.
 class SwiftyJournalPage extends StatefulWidget {
   const SwiftyJournalPage({super.key});
 
@@ -50,34 +31,102 @@ class SwiftyJournalPage extends StatefulWidget {
 
 class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
   final TextEditingController _controller = TextEditingController();
-  final List<String> _messages = [];
+  // Store messages as a Map for ordering and potential future use
+  final List<Map<String, dynamic>> _messages = [];
+  late FlutterTts _flutterTts;
+  late stt.SpeechToText _speechToText;
+  late FirebaseFirestore _firestore;
 
-  // Sends the user's message to Sura and displays Sura's reply.
+  @override
+  void initState() {
+    super.initState();
+    _flutterTts = FlutterTts();
+    _speechToText = stt.SpeechToText();
+    _firestore = FirebaseFirestore.instance;
+    _loadMessages();
+  }
+
+  // Load today's messages sorted by timestamp (00:00 to 23:59:59)
+  void _loadMessages() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final uid = user.uid;
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final querySnapshot =
+        await _firestore
+            .collection('chats')
+            .where('uid', isEqualTo: uid)
+            .where('date', isEqualTo: today)
+            .orderBy('timestamp')
+            .get();
+
+    setState(() {
+      _messages.clear();
+      for (var doc in querySnapshot.docs) {
+        _messages.add({
+          'message': doc['message'],
+          'timestamp': doc['timestamp'],
+        });
+      }
+    });
+  }
+
+  // Send message and save to Firestore
   void _sendMessage() async {
     final input = _controller.text.trim();
     if (input.isEmpty) return;
 
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid;
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    // Save the user's message
+    final userMessage = "You: $input";
     setState(() {
-      _messages.add("You: $input");
+      _messages.add({'message': userMessage});
+    });
+    await _firestore.collection('chats').add({
+      'message': userMessage,
+      'uid': uid,
+      'date': today,
+      'timestamp': FieldValue.serverTimestamp(),
     });
 
     _controller.clear();
 
-    // Retrieve Sura's reply using Firebase Vertex AI.
+    // Retrieve Sura's reply
     final response = await GeminiService.getSuraReply(input);
-
+    final suraMessage = "Sura: $response";
     setState(() {
-      _messages.add("Sura: $response");
+      _messages.add({'message': suraMessage});
+    });
+
+    // Save Sura's reply
+    await _firestore.collection('chats').add({
+      'message': suraMessage,
+      'uid': uid,
+      'date': today,
+      'timestamp': FieldValue.serverTimestamp(),
     });
   }
 
-  // Saves the conversation to Firestore.
-  void _saveSwiftyJournal(String content) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final date = DateFormat('dd-MM-yyyy').format(DateTime.now());
-      FirebaseService.saveJournal(user.uid, "swifty", content, date);
+  // Start listening to user's voice
+  void _startListening() async {
+    if (await _speechToText.initialize()) {
+      _speechToText.listen(
+        onResult: (result) {
+          setState(() {
+            _controller.text = result.recognizedWords;
+          });
+        },
+      );
     }
+  }
+
+  // Speak out the message using TTS
+  void _speakMessage(String message) async {
+    await _flutterTts.speak(message);
   }
 
   @override
@@ -87,81 +136,140 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Swifty Journal"),
             Text(
-              "Sura: Your Cute & Insightful Journaling Companion! 📝💖",
-              style: TextStyle(fontSize: 12, color: Colors.white70),
+              "Swifty Journal",
+              style: TextStyle(
+                fontFamily: 'Atkinson Hyperlegible',
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+            Text(
+              "Your Journalling Companion😂",
+              style: TextStyle(fontSize: 14, color: Colors.white70),
             ),
           ],
         ),
         backgroundColor: Colors.black,
       ),
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              "Sura is here to chat 💬",
-              style: TextStyle(fontSize: 16),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return Align(
-                  alignment:
-                      message.startsWith("You:")
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color:
-                          message.startsWith("You:")
-                              ? Colors.blueGrey
-                              : Colors.pinkAccent.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      message
-                          .replaceFirst("You: ", "")
-                          .replaceFirst("Sura: ", ""),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  decoration: const InputDecoration(
-                    hintText: "Talk to Sura...",
-                    filled: true,
-                    fillColor: Colors.white24,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                ),
+      body: Container(
+        color: const Color(0xFF121212), // Dark aesthetic background
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: _messages.length,
+                itemBuilder: (context, index) {
+                  final messageData = _messages[index];
+                  final message = messageData['message'] as String;
+                  final bool isSuraMessage = message.startsWith("Sura:");
+
+                  if (isSuraMessage) {
+                    // Received messages: Gradient purple background with speaker button on the left
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.volume_up),
+                            iconSize: 20,
+                            color: Colors.white,
+                            onPressed: () => _speakMessage(message),
+                          ),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF8E2DE2),
+                                    Color(0xFF4A00E0),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                              child: Text(
+                                message.replaceFirst("Sura: ", ""),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Open Dyslexic',
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    // Sent messages: Solid black background
+                    return Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          message.replaceFirst("You: ", ""),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Open Dyslexic',
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
               ),
-              IconButton(onPressed: _sendMessage, icon: const Icon(Icons.send)),
-            ],
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Save the complete conversation.
-          final content = _messages.join("\n");
-          _saveSwiftyJournal(content);
-        },
-        child: const Icon(Icons.save),
+            ),
+            // Input area
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        hintText: "Talk to Sura...",
+                        filled: true,
+                        fillColor: Colors.white24,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Speech-to-text mic button
+                  IconButton(
+                    onPressed: _startListening,
+                    icon: const Icon(Icons.mic),
+                  ),
+                  // Send button remains as is
+                  IconButton(
+                    onPressed: _sendMessage,
+                    icon: const Icon(Icons.send),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

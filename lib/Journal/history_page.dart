@@ -1,60 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'journal_detail.dart'; // Import your journal detail page
+import 'journal_detail.dart';
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
 
-  // Fetches journal entries from both 'daily_journals' and 'journals' collections
   Future<List<Map<String, dynamic>>> _fetchJournals() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return [];
-    }
+    if (user == null) return [];
+
     final uid = user.uid;
 
-    // Query daily journals
-    final dailyQuerySnapshot =
-        await FirebaseFirestore.instance
-            .collection('daily_journals')
-            .where('uid', isEqualTo: uid)
-            .get();
-
-    // Query swifty journals
-    final swiftyQuerySnapshot =
+    final swiftyDocs =
         await FirebaseFirestore.instance
             .collection('journals')
             .where('uid', isEqualTo: uid)
             .get();
 
-    List<Map<String, dynamic>> journals = [];
+    final dailyDocs =
+        await FirebaseFirestore.instance
+            .collection('daily_journals')
+            .where('uid', isEqualTo: uid)
+            .get();
 
-    // Process daily journals: assign type and include document id.
-    for (var doc in dailyQuerySnapshot.docs) {
+    final Map<String, Map<String, dynamic>> uniqueJournals = {};
+
+    for (var doc in swiftyDocs.docs) {
       final data = doc.data();
-      data['type'] = 'daily';
-      data['id'] = doc.id;
-      journals.add(data);
+      final key = 'swifty-${data["date"]}';
+      if (!uniqueJournals.containsKey(key) ||
+          (data['timestamp'] ?? Timestamp(0, 0)).compareTo(
+                uniqueJournals[key]!['timestamp'],
+              ) >
+              0) {
+        data['type'] = 'swifty';
+        data['id'] = doc.id;
+        uniqueJournals[key] = data;
+      }
     }
 
-    // Process swifty journals: assign type and include document id.
-    for (var doc in swiftyQuerySnapshot.docs) {
+    for (var doc in dailyDocs.docs) {
       final data = doc.data();
-      data['type'] = 'swifty';
-      data['id'] = doc.id;
-      journals.add(data);
+      final key = 'daily-${data["date"]}';
+      if (!uniqueJournals.containsKey(key) ||
+          (data['timestamp'] ?? Timestamp(0, 0)).compareTo(
+                uniqueJournals[key]!['timestamp'],
+              ) >
+              0) {
+        data['type'] = 'daily';
+        data['id'] = doc.id;
+        uniqueJournals[key] = data;
+      }
     }
 
-    // Sort the journals by server-generated timestamp (newest first)
-    journals.sort((a, b) {
+    final all = uniqueJournals.values.toList();
+
+    all.sort((a, b) {
       final t1 = a['timestamp'] as Timestamp?;
       final t2 = b['timestamp'] as Timestamp?;
       if (t1 == null || t2 == null) return 0;
       return t2.compareTo(t1);
     });
 
-    return journals;
+    return all;
   }
 
   @override
@@ -84,13 +93,7 @@ class HistoryPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final entry = journals[index];
               return ListTile(
-                leading: Icon(
-                  Icons.book,
-                  color:
-                      entry["type"] == "swifty"
-                          ? Colors.pinkAccent
-                          : Colors.tealAccent,
-                ),
+                leading: const Icon(Icons.book, color: Colors.pinkAccent),
                 title: Text(
                   "Journal - ${entry["date"]}",
                   style: const TextStyle(color: Colors.white),
@@ -102,14 +105,13 @@ class HistoryPage extends StatelessWidget {
                   style: const TextStyle(color: Colors.white70),
                 ),
                 onTap: () {
-                  // Navigate to the journal detail page with document id and type
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder:
                           (_) => JournalDetailPage(
-                            journalId: entry["id"] as String,
-                            journalType: entry["type"] as String,
+                            journalId: entry["id"],
+                            journalType: entry["type"],
                           ),
                     ),
                   );

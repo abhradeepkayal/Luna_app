@@ -37,7 +37,7 @@ class AboutUsPage extends StatelessWidget {
               'Yash Agarwal',
               'Frontend & Backend Developer',
               'Turning ideas into interactive experiences!',
-              'Yash Agarwal is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Information Technology. Passionate about app development, Yash is committed to building intuitive and dynamic digital solutions. With expertise in C, C++, HTML, CSS, Dart, Flutter, and Firebase, he crafts seamless user experiences and scalable applications.',
+              'Yash Agarwal is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Information Technology. Passionate about app development, Yash is committed to building intuitive and dynamic digital solutions. With expertise in C, C++, HTML, CSS, Python, Dart, Flutter, and Firebase, he crafts seamless user experiences and scalable applications.',
               'assets/yash.jpg',
               'yash.email@example.com',
               'https://linkedin.com/in/yash',
