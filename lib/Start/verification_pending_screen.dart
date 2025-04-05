@@ -1,4 +1,3 @@
-// verification_pending_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,8 +7,7 @@ class VerificationPendingScreen extends StatefulWidget {
   const VerificationPendingScreen({super.key});
 
   @override
-  State<VerificationPendingScreen> createState() =>
-      _VerificationPendingScreenState();
+  State<VerificationPendingScreen> createState() => _VerificationPendingScreenState();
 }
 
 class _VerificationPendingScreenState extends State<VerificationPendingScreen> {
@@ -23,15 +21,17 @@ class _VerificationPendingScreenState extends State<VerificationPendingScreen> {
   }
 
   void _startEmailCheckTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+    _timer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       await FirebaseAuth.instance.currentUser?.reload();
       if (FirebaseAuth.instance.currentUser?.emailVerified ?? false) {
         timer.cancel();
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
+          setState(() {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          });
         }
       }
     });
@@ -47,21 +47,29 @@ class _VerificationPendingScreenState extends State<VerificationPendingScreen> {
     setState(() => _isResending = true);
     try {
       await FirebaseAuth.instance.currentUser?.sendEmailVerification();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Verification email sent!")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Verification email sent!")),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${e.toString()}")),
+        );
+      }
     }
-    setState(() => _isResending = false);
+    if (mounted) {
+      setState(() => _isResending = false);
+    }
   }
 
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
     if (mounted) {
-      Navigator.popUntil(context, (route) => route.isFirst);
+      setState(() {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
     }
   }
 
@@ -92,10 +100,9 @@ class _VerificationPendingScreenState extends State<VerificationPendingScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isResending ? null : _resendVerificationEmail,
-              child:
-                  _isResending
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Resend Verification Email"),
+              child: _isResending
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text("Resend Verification Email"),
             ),
             const SizedBox(height: 10),
             ElevatedButton(

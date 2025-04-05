@@ -9,11 +9,8 @@ class SpeechTherapyPage extends StatelessWidget {
 
   // Replace these asset paths with your actual image paths.
   final List<String> imagePaths = const [
-    'assets/images/codeforces.png', // Picture Word - tapping this navigates to minimal pairs
-    'assets/images/garfield.png',   // Tapping this navigates to Scenario screen
-    'assets/images/mindora.png',    // (No action)
-    'assets/images/ruskinbond.png', // (No action)
-    'assets/images/NeuroApp.jpeg',  // (No action)
+    'assets/images/PICTURE.png', // Picture Word - tapping this navigates to minimal pairs
+    'assets/images/garfield.png', // Tapping this navigates to Scenario screen
   ];
 
   @override
@@ -24,11 +21,19 @@ class SpeechTherapyPage extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Image.asset(
-            'assets/images/NeuroApp.jpeg',
+            'assets/images/luna.png',
             fit: BoxFit.contain,
           ),
         ),
-        title: const Text('NeuroApp'),
+        title: const Text(
+          'Luna',
+          style: TextStyle(
+          fontFamily: 'AtkinsonHyperlegible',
+          color: Color.fromARGB(234, 255, 255, 77),
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -54,10 +59,7 @@ class SpeechTherapyPage extends StatelessWidget {
                 aspectRatio: 16 / 9,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    imagePaths[index],
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.asset(imagePaths[index], fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -98,15 +100,19 @@ class AppBottomNavBar extends StatelessWidget {
       items: [
         const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         const BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Forum'),
-        const BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.search),
+          label: 'Search',
+        ),
         const BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chatbot'),
         BottomNavigationBarItem(
-          icon: user?.photoURL != null
-              ? CircleAvatar(
-                  backgroundImage: NetworkImage(user!.photoURL!),
-                  radius: 12,
-                )
-              : const Icon(Icons.person),
+          icon:
+              user?.photoURL != null
+                  ? CircleAvatar(
+                    backgroundImage: NetworkImage(user!.photoURL!),
+                    radius: 12,
+                  )
+                  : const Icon(Icons.person),
           label: 'Profile',
         ),
       ],

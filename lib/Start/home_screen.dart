@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'assets/images/FINAL_speech therapy.png', // Second image triggers Speech Therapy
     'assets/images/activities.png',
     'assets/images/codeforces.png',
-    'assets/images/fouram.png',
+    'assets/images/toDo.gif',
   ];
 
   @override
@@ -52,6 +52,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _signOut() async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushReplacementNamed(context, '/login');
+  }
+  void _contact() async {
+    Navigator.pushReplacementNamed(context, '/contact');
+  }
+  void _aboutUs() async {
+    Navigator.pushReplacementNamed(context, '/aboutUs');
   }
 
   @override
@@ -110,6 +116,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(color: Color(0xFFF5F5DC)),
               ),
               onTap: _signOut,
+            ),
+            ListTile(
+              leading: const Icon(Icons.mail_outline, color: Color(0xFFF5F5DC)),
+              title: const Text(
+                'Contact Us',
+                style: TextStyle(color: Color(0xFFF5F5DC)),
+              ),
+              onTap: _contact,
+            ),ListTile(
+              leading: const Icon(Icons.info_outline, color: Color(0xFFF5F5DC)),
+              title: const Text(
+                'About Us',
+                style: TextStyle(color: Color(0xFFF5F5DC)),
+              ),
+              onTap: _aboutUs,
             ),
           ],
         ),
@@ -186,6 +207,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         imageWidget = GestureDetector(
                           onTap: () {
                             Navigator.pushNamed(context, '/activities');
+                          },
+                          child: imageWidget,
+                        );
+                      }else if (index == 3) {
+                        imageWidget = GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/visual');
+                          },
+                          child: imageWidget,
+                        );
+                      }else if (index == 4) {
+                        imageWidget = GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/todo');
                           },
                           child: imageWidget,
                         );

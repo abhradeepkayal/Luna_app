@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class JournalDetailPage extends StatelessWidget {
   final String journalId;
@@ -11,9 +12,17 @@ class JournalDetailPage extends StatelessWidget {
     required this.journalType,
   });
 
+  static const Map<String, String> moodEmojis = {
+    'Happy': '😊',
+    'Sad': '😔',
+    'Excited': '😄',
+    'Neutral': '😐',
+    'Tired': '😴',
+    // Add more moods here if needed
+  };
+
   @override
   Widget build(BuildContext context) {
-    // Choose the collection based on the journal type.
     final String collectionName =
         journalType == 'swifty' ? 'journals' : 'daily_journals';
 
@@ -22,6 +31,7 @@ class JournalDetailPage extends StatelessWidget {
         title: const Text("Journal Detail"),
         backgroundColor: Colors.black,
       ),
+      backgroundColor: Colors.black,
       body: FutureBuilder<DocumentSnapshot>(
         future:
             FirebaseFirestore.instance
@@ -40,9 +50,12 @@ class JournalDetailPage extends StatelessWidget {
               ),
             );
           }
+
           final data = snapshot.data!.data() as Map<String, dynamic>;
-          final String content = data['content'] as String? ?? '';
-          final String date = data['date'] as String? ?? '';
+          final String content = data['content'] ?? '';
+          final String date = data['date'] ?? '';
+          final String mood = data['mood'] ?? '';
+          final String emoji = moodEmojis[mood] ?? '';
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -50,16 +63,29 @@ class JournalDetailPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  date,
+                  "🗓 $date",
                   style: const TextStyle(fontSize: 18, color: Colors.white70),
                 ),
-                const SizedBox(height: 10),
+                if (mood.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    "Mood: $emoji $mood",
+                    style: const TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ],
+                const SizedBox(height: 20),
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: Text(
-                      content,
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                  child: Markdown(
+                    data: content,
+                    styleSheet: MarkdownStyleSheet.fromTheme(
+                      Theme.of(context),
+                    ).copyWith(p: const TextStyle(color: Colors.white)),
+                    imageBuilder: (uri, title, alt) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Image.network(uri.toString()),
+                      );
+                    },
                   ),
                 ),
               ],

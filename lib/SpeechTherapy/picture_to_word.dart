@@ -1,14 +1,10 @@
-import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:string_similarity/string_similarity.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:just_audio/just_audio.dart';
-
-const String googleApiKey = 'AIzaSyC8aoDt6_PM5i9_xz7AlHBo720SU_nAHSY';
-const String customSearchEngineId = 'd0355ea3695f2481b';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // for environment variables
 
 class PictureToWord extends StatefulWidget {
   const PictureToWord({super.key});
@@ -19,73 +15,93 @@ class PictureToWord extends StatefulWidget {
 
 class _PictureToWordState extends State<PictureToWord>
     with TickerProviderStateMixin {
-  final List<String> tags = [
-    'apple', 'banana', 'orange', 'grapes', 'watermelon', 'strawberry',
-    'pineapple', 'mango', 'peach', 'lemon',
-    'tomato', 'potato', 'onion', 'cucumber', 'broccoli',
-    'lettuce', 'spinach', 'eggplant', 'pumpkin', 'pepper', 'corn',
-    'dog', 'cat', 'bird', 'fish', 'rabbit', 'horse', 'cow', 'goat', 'sheep',
-    'lion', 'tiger', 'elephant', 'giraffe', 'zebra', 'monkey', 'bear', 'fox',
-    'car', 'bus', 'train', 'bicycle', 'motorcycle', 'airplane', 'ship',
-    'house', 'bed', 'chair', 'table', 'door', 'window', 'television',
-    'computer', 'phone', 'book', 'pencil', 'pen', 'paper', 'scissors', 'bag',
-    'shirt', 'pants', 'shoes', 'hat', 'toothbrush', 'toothpaste', 'soap',
-    'towel', 'water', 'juice', 'coffee', 'tea', 'sugar', 'salt', 'oil', 'spoon',
-    'fork', 'knife', 'plate', 'cup'
-  ];
-
   late String currentTag;
   String imageUrl = 'https://via.placeholder.com/400x300.png?text=Loading...';
   final TextEditingController _controller = TextEditingController();
   String feedback = '';
   final double threshold = 0.8;
+  bool _isLoading = false;
 
   late AnimationController _confettiController;
-  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
-    _loadRandomImage();
     _confettiController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     );
+    _loadRandomImage();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _confettiController.dispose();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
+  /// Orchestrates AI tag generation + image fetch + UI updates
   Future<void> _loadRandomImage() async {
-    final random = Random();
-    currentTag = tags[random.nextInt(tags.length)];
+    setState(() => _isLoading = true);
+
+    // 1) Generate a tag via Vertex AI
+    currentTag = await _generateTagFromAI();
+
+    // 2) Fetch image URL for that tag
     final fetchedUrl = await _fetchImageUrl(currentTag);
-    if (fetchedUrl != null) {
-      imageUrl = fetchedUrl;
-    } else {
-      imageUrl = 'https://via.placeholder.com/400x300.png?text=${Uri.encodeComponent(currentTag)}';
-    }
+    imageUrl = fetchedUrl ??
+        'https://via.placeholder.com/400x300.png?text=${Uri.encodeComponent(currentTag)}';
+
     _controller.clear();
     setState(() {
       feedback = '';
+      _isLoading = false;
     });
   }
 
-  Future<String?> _fetchImageUrl(String tag) async {
-    final query = 'photo of $tag';
-    final url =
-        'https://www.googleapis.com/customsearch/v1?key=$googleApiKey&cx=$customSearchEngineId&q=${Uri.encodeQueryComponent(query)}&searchType=image';
+  /// Calls Gemini-2.0-Flash-Lite to pick a random common noun tag
+  Future<String> _generateTagFromAI() async {
+    final model = FirebaseVertexAI.instance.generativeModel(
+      model: 'models/gemini-2.0-flash-lite-001',
+    );
+
+    final prompt = '''
+Pick exactly one common everyday object (in singular form) at random, such as "apple", "dog", or "chair". Respond with only that single word, no punctuation or explanation.
+''';
+
     try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        if (jsonData['items'] != null && jsonData['items'].length > 0) {
-          return jsonData['items'][0]['link'];
+      final response = await model.generateContent([Content.text(prompt)]);
+      final text = response.text?.trim().split(RegExp(r'\s+')).first;
+      if (text != null && text.isNotEmpty) {
+        return text.toLowerCase();
+      }
+    } catch (e) {
+      debugPrint('Tag generation error: $e');
+    }
+
+    // Fallback to a generic tag
+    return 'object';
+  }
+
+  /// Uses Google Custom Search to fetch an image URL for [tag]
+  Future<String?> _fetchImageUrl(String tag) async {
+    final apiKey = dotenv.env['GOOGLE_API_KEY'];
+    final cx = dotenv.env['CUSTOM_SEARCH_ENGINE_ID'];
+    if (apiKey == null || cx == null) {
+      debugPrint('Missing .env configuration for API key or CSE ID');
+      return null;
+    }
+
+    final url =
+        'https://www.googleapis.com/customsearch/v1?key=$apiKey&cx=$cx&q=${Uri.encodeQueryComponent(tag)}&searchType=image';
+    try {
+      final res = await http.get(Uri.parse(url));
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        final items = data['items'] as List<dynamic>?;
+        if (items != null && items.isNotEmpty) {
+          return items.first['link'] as String?;
         }
       }
     } catch (e) {
@@ -94,19 +110,12 @@ class _PictureToWordState extends State<PictureToWord>
     return null;
   }
 
-  Future<void> _checkAnswer([_]) async {
+  /// Checks user’s answer and generates AI feedback + joke
+  Future<void> checkAnswer([_]) async {
     final userAnswer = _controller.text.trim().toLowerCase();
     final expected = currentTag.toLowerCase();
-    bool isCorrect =
+    final isCorrect =
         StringSimilarity.compareTwoStrings(userAnswer, expected) >= threshold;
-
-    if (isCorrect) {
-      _confettiController.forward(from: 0);
-      await _audioPlayer.setAsset('assets/sounds/correct.mp3');
-    } else {
-      await _audioPlayer.setAsset('assets/sounds/wrong.mp3');
-    }
-    _audioPlayer.play();
 
     final aiResponse = await _generateAIResponse(
       userAnswer: userAnswer,
@@ -119,6 +128,7 @@ class _PictureToWordState extends State<PictureToWord>
     });
   }
 
+  /// Uses Gemini-2.0-Flash to craft feedback and a two‑line joke
   Future<String> _generateAIResponse({
     required String userAnswer,
     required String correctTag,
@@ -127,25 +137,21 @@ class _PictureToWordState extends State<PictureToWord>
     final model = FirebaseVertexAI.instance.generativeModel(
       model: 'models/gemini-2.0-flash-001',
     );
-
     final prompt = '''
 User typed: "$userAnswer"
 Correct Word: "$correctTag"
 They were ${isCorrect ? 'correct' : 'incorrect'}.
 
-Please provide:
-1) A short enthusiastic compliment if the answer is correct.
-Otherwise, give an encouraging remark and also tell the correct answer. Make it personalised according to the user input. Answer in two sentences.
-2) A two liner joke about "$correctTag" in simple words.
+1) ${isCorrect ? 'Give a short enthusiastic compliment.' : 'Give an encouraging remark and reveal the correct answer.'}
+2) A two line joke about "$correctTag", starting with "Just for fun: "
 
-Answer in two concise paragraphs and not points. Do not write any filler sentences. Only two points. Befor the joke, write "Just for fun: "
+Respond in two concise paragraphs, no filler.
 ''';
-
     try {
-      final response = await model.generateContent([Content.text(prompt)]);
-      return response.text ?? 'Great effort!';
+      final resp = await model.generateContent([Content.text(prompt)]);
+      return resp.text ?? 'Great effort!';
     } catch (e) {
-      return 'Error generating AI response: $e';
+      return 'Error generating feedback: $e';
     }
   }
 
@@ -160,38 +166,50 @@ Answer in two concise paragraphs and not points. Do not write any filler sentenc
         ),
         title: Row(
           children: [
-            Image.asset('assets/images/NeuroApp.jpeg', height: 30),
+            Image.asset('assets/images/luna.png', height: 30),
             const SizedBox(width: 8),
-            const Text('NeuroApp'),
+            const Text('Luna'),
           ],
         ),
       ),
       body: SafeArea(
         child: Column(
           children: [
+            // Image + spinner overlay
             Expanded(
               child: SingleChildScrollView(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Column(
                   children: [
-                    Image.network(
-                      imageUrl,
-                      height: 300,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Image.network(
+                          imageUrl,
                           height: 300,
-                          color: Colors.grey,
-                          child:
-                              const Center(child: Text('Image not available')),
-                        );
-                      },
-                    ).animate(controller: _confettiController).shake(),
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, st) => Container(
+                            height: 300,
+                            color: Colors.grey,
+                            child:
+                                const Center(child: Text('Loading Image…')),
+                          ),
+                        ).animate(controller: _confettiController).shake(),
+                        if (_isLoading)
+                          Container(
+                            height: 300,
+                            color: Colors.black38,
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _controller,
-                      onSubmitted: _checkAnswer,
+                      onSubmitted: checkAnswer,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'What is this?',
@@ -199,7 +217,7 @@ Answer in two concise paragraphs and not points. Do not write any filler sentenc
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: _checkAnswer,
+                      onPressed: checkAnswer,
                       child: const Text('Submit'),
                     ),
                     const SizedBox(height: 16),

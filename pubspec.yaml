@@ -60,6 +60,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   audioplayers: ^6.4.0
   lottie: ^3.0.0
+  flutter_local_notifications: ^19.0.0
+  timezone: ^0.10.0
+  url_launcher: ^6.3.1
+  flutter_markdown: ^0.7.7
+  emoji_picker_flutter: ^4.3.0
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
@@ -114,9 +120,34 @@ flutter:
     - assets/images/mindora.png
     - assets/images/ruskinbond.png
     - assets/images/fouram.png
+    - assets/images/luna.png
     - .env
     - assets/sounds/correct.mp3
     - assets/sounds/wrong.mp3
+    - assets/audios/binaural1.mp3
+    - assets/audios/binaural2.mp3
+    - assets/audios/focus1.mp3
+    - assets/audios/focus2.mp3
+    - assets/audios/meditation1.mp3
+    - assets/audios/meditation2.mp3
+    - assets/audios/reading1.mp3
+    - assets/audios/reading2.mp3
+    - assets/audios/sleep1.mp3
+    - assets/audios/sleep2.mp3
+    - assets/audios/soothing1.mp3
+    - assets/audios/soothing2.mp3
+    - assets/audios/spiritual1.mp3
+    - assets/audios/spiritual2.mp3
+    - assets/audios/study1.mp3
+    - assets/audios/study2.mp3
+    - assets/videos/binaural_bg.mp4
+    - assets/videos/focus_bg.mp4
+    - assets/videos/main_bg.mp4
+    - assets/videos/meditation_bg.mp4
+    - assets/videos/reading_bg.mp4
+    - assets/videos/sleep_bg.mp4
+    - assets/videos/soothing_bg.mp4
+    - assets/videos/spiritual_bg.mp4
 
 
 

@@ -1,29 +1,71 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // Importing the package for launching email
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactPage extends StatelessWidget {
-  const ContactPage({super.key});
+  const ContactPage({Key? key}) : super(key: key);
 
-  // Method to launch the email client
-  Future<void> _launchEmail() async {
-    final Uri emailUri = Uri(
-      scheme: 'mailto',
-      path: 'lunabeyondsolutions@gmail.com',
-    );
-
-    if (await canLaunch(emailUri.toString())) {
-      await launch(emailUri.toString());
-    } else {
-      throw 'Could not launch email client';
+  Future<void> _launchURL(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    if (!await canLaunchUrl(uri)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open $url')),
+      );
+      return;
     }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Widget _buildContactCard({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String url,
+    required Color color,
+  }) {
+    return Card(
+      color: Colors.grey[850],
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: color,
+          child: Icon(icon, color: Colors.white, size: 28),
+        ),
+        title: Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'AtkinsonHyperlegible',
+            fontSize: 18,
+            color: Colors.white,
+          ),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
+        onTap: () => _launchURL(context, url),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[900], // Greyish-black background
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: Text(
+        leading: IconButton(
+    icon: Icon(
+  Theme.of(context).platform == TargetPlatform.iOS
+      ? Icons.arrow_back_ios
+      : Icons.arrow_back,
+  color: Colors.white,
+),
+
+    onPressed: () {
+      Navigator.pop(context);
+    },
+  ),
+        title: const Text(
           'Contact Us',
           style: TextStyle(
             fontFamily: 'AtkinsonHyperlegible',
@@ -36,116 +78,61 @@ class ContactPage extends StatelessWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // App Description
-            Text(
-              'About Luna',
+            // Intro Text
+            const Text(
+              'We’d love to hear from you!',
               style: TextStyle(
                 fontFamily: 'AtkinsonHyperlegible',
-                fontSize: 26,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
-            SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(15.0),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Text(
-                'Luna is an app created specifically for neurodiverse individuals, '
-                'aimed at enhancing their lives by providing tools that encourage inclusivity, '
-                'understanding, and support. Our mission is to create a space where neurodiverse individuals '
-                'feel valued and empowered.',
-                style: TextStyle(
-                  fontFamily: 'OpenDyslexic',
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            SizedBox(height: 30),
-
-            // Contact Information Section
-            Text(
-              'Contact Information',
+            const SizedBox(height: 8),
+            const Text(
+              'Have a question, feedback, or just want to say hello? '
+              'Choose any of the options below and we’ll get back to you as soon as possible.',
               style: TextStyle(
-                fontFamily: 'AtkinsonHyperlegible',
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+                fontFamily: 'OpenDyslexic',
+                fontSize: 16,
+                color: Colors.white70,
+                height: 1.4,
               ),
             ),
-            SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(15.0),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Text(
-                'For any inquiries, feedback, or support, feel free to reach out to us via email:',
-                style: TextStyle(
-                  fontFamily: 'OpenDyslexic',
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Interactive Email Link
-            InkWell(
-              onTap: _launchEmail, // Call the method to launch the email
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 25.0),
-                decoration: BoxDecoration(
-                  color: Colors.lightBlueAccent,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.5),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.email, color: Colors.white, size: 20),
-                    SizedBox(width: 10),
-                    Text(
-                      'lunabeyondsolutions@gmail.com',
-                      style: TextStyle(
-                        fontFamily: 'OpenDyslexic',
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            // Contact Cards
+            _buildContactCard(
+              context: context,
+              icon: Icons.email,
+              label: 'lunabeyondsolutions@gmail.com',
+              url: 'mailto:lunabeyondsolutions@gmail.com',
+              color: Colors.redAccent,
+            ),
+            _buildContactCard(
+              context: context,
+              icon: Icons.facebook,
+              label: 'Luna on Facebook',
+              url: 'https://www.facebook.com/yourpage',
+              color: const Color(0xFF4267B2),
+            ),
+            _buildContactCard(
+              context: context,
+              icon: Icons.camera_alt,
+              label: '@luna_app on Instagram',
+              url: 'https://www.instagram.com/yourpage',
+              color: const Color(0xFFC13584),
+            ),
+            _buildContactCard(
+              context: context,
+              icon: Icons.business_center,
+              label: 'Luna on LinkedIn',
+              url: 'https://www.linkedin.com/in/yourprofile',
+              color: const Color(0xFF0077B5),
             ),
           ],
         ),

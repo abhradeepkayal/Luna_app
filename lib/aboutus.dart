@@ -9,17 +9,30 @@ class AboutUsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[900], // Greyish-black background
       appBar: AppBar(
-        title: Text(
-          'About Us',
-          style: TextStyle(
-            fontFamily: 'AtkinsonHyperlegible', // Heading font style
-            color: Colors.white,
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.black,
-      ),
+  leading: IconButton(
+    icon: Icon(
+  Theme.of(context).platform == TargetPlatform.iOS
+      ? Icons.arrow_back_ios
+      : Icons.arrow_back,
+  color: Colors.white,
+),
+
+    onPressed: () {
+      Navigator.pop(context);
+    },
+  ),
+  title: Text(
+    'About Us',
+    style: TextStyle(
+      fontFamily: 'AtkinsonHyperlegible', // Heading font style
+      color: Colors.white,
+      fontSize: 30,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+  backgroundColor: Colors.black,
+),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -30,17 +43,17 @@ class AboutUsPage extends StatelessWidget {
               'Building seamless experiences, one line of code at a time.',
               'Aditya Shaw is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Information Technology. Passionate about competitive coding and full-stack development, he is constantly refining his problem-solving skills. A pupil on Codeforces, Aditya is well-versed in C, C++, Dart, Flutter, and Firebase, crafting robust and scalable applications.',
               'assets/aditya.jpg', // Placeholder for image
-              'aditya.email@example.com',
-              'https://linkedin.com/in/aditya',
+              'adityawcode@gmail.com',
+              'https://www.linkedin.com/in/aditya-shaw-809a7b323',
             ),
             _buildProfileCard(
               'Yash Agarwal',
               'Frontend & Backend Developer',
               'Turning ideas into interactive experiences!',
-              'Yash Agarwal is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Information Technology. Passionate about app development, Yash is committed to building intuitive and dynamic digital solutions. With expertise in C, C++, HTML, CSS, Dart, Flutter, and Firebase, he crafts seamless user experiences and scalable applications.',
+              'Yash Agarwal is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Information Technology. Passionate about app development, Yash is committed to building intuitive and dynamic digital solutions. With expertise in C, C++, Python, HTML, CSS, Dart, Flutter, and Firebase, he crafts seamless user experiences and scalable applications.',
               'assets/yash.jpg',
-              'yash.email@example.com',
-              'https://linkedin.com/in/yash',
+              'yashagarwal7088@gmail.com',
+              'https://www.linkedin.com/in/yash-agarwal-b95630308',
             ),
             _buildProfileCard(
               'Anik Chakraborty',
@@ -48,8 +61,8 @@ class AboutUsPage extends StatelessWidget {
               'Bringing ideas to life with creativity and motion!',
               'Anik Chakraborty is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Computer Science and Technology. With a keen eye for design and animation, Anik specializes in crafting smooth, aesthetically pleasing user experiences. He is a researcher of cool ideas for the app and is highly skilled in Canva and Flutter UI design, ensuring that every visual element tells a story.',
               'assets/anik.jpg',
-              'anik.email@example.com',
-              'https://linkedin.com/in/anik',
+              'anik.newme@gmail.com',
+              'https://www.linkedin.com/in/anik-chakraborty-a2183b277',
             ),
             _buildProfileCard(
               'Abhradeep Kayal',
@@ -57,8 +70,8 @@ class AboutUsPage extends StatelessWidget {
               'Crafting meaningful experiences, one code at a time!',
               'Abhradeep Kayal is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Electrical Engineering. He has a strong interest in development and is passionate about creating intuitive and user-friendly interfaces. Abhradeep created Mindora, a mental health tracker website, showcasing his development skills. With expertise in C, Java, Python, HTML, CSS, JavaScript, MERN stack, Dart, and Flutter, he focuses on building efficient and well-designed applications.',
               'assets/abhradeep.jpg',
-              'abhradeep.email@example.com',
-              'https://linkedin.com/in/abhradeep',
+              'kayal.abhradeep04@gmail.com',
+              'https://www.linkedin.com/in/adk47/',
             ),
           ],
         ),
@@ -161,11 +174,16 @@ class AboutUsPage extends StatelessWidget {
     );
   }
 
-  Future<void> _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
+  Future<void> _launchURL(String urlString) async {
+    final Uri uri = Uri.parse(urlString);
+
+    // new canLaunchUrl
+    if (!await canLaunchUrl(uri)) {
+      throw 'Could not launch $uri';
     }
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
   }
 }
