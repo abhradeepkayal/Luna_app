@@ -1,74 +1,72 @@
-/*import 'package:flutter/material.dart';
-import 'package:zefyrka/zefyrka.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class JournalDetailPage extends StatelessWidget {
-  final dynamic content; // List for daily, String for swifty
-  final String date;
-  final String type;
-  final String? mood;
+  final String journalId;
+  final String journalType;
 
   const JournalDetailPage({
     super.key,
-    required this.content,
-    required this.date,
-    required this.type,
-    this.mood,
+    required this.journalId,
+    required this.journalType,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDaily = type == "daily";
-    final document = isDaily && content is List
-        ? NotusDocument.fromJson(content as List<dynamic>)
-        : null;
+    // Choose the collection based on the journal type.
+    final String collectionName =
+        journalType == 'swifty' ? 'journals' : 'daily_journals';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Journal Detail"),
         backgroundColor: Colors.black,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              date,
-              style: const TextStyle(fontSize: 18, color: Colors.white70),
-            ),
-            if (isDaily && mood != null && mood!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurpleAccent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  mood!,
-                  style: const TextStyle(color: Colors.white),
-                ),
+      body: FutureBuilder<DocumentSnapshot>(
+        future:
+            FirebaseFirestore.instance
+                .collection(collectionName)
+                .doc(journalId)
+                .get(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(
+              child: Text(
+                "Journal not found",
+                style: TextStyle(color: Colors.white),
               ),
-            ],
-            const SizedBox(height: 16),
-            Expanded(
-              child: isDaily && document != null
-                  ? ZefyrEditor(
-                      controller: ZefyrController(document),
-                      focusNode: FocusNode(),
-                      readOnly: true,
-                      padding: const EdgeInsets.all(8),
-                    )
-                  : SingleChildScrollView(
-                      child: Text(
-                        content.toString(),
-                        style: const TextStyle(color: Colors.white, fontSize: 16),
-                      ),
+            );
+          }
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final String content = data['content'] as String? ?? '';
+          final String date = data['date'] as String? ?? '';
+
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  date,
+                  style: const TextStyle(fontSize: 18, color: Colors.white70),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      content,
+                      style: const TextStyle(color: Colors.white),
                     ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
-}*/
+}

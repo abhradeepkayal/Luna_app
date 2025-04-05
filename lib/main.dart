@@ -3,7 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:neuro_app/Activites/activites_main.dart';
-// import 'package:neuro_app/Journal/daily_journal.dart';
+import 'package:neuro_app/Journal/journal_main.dart';
+
 import 'package:neuro_app/MainChatbot/chatbot.dart';
 import 'package:neuro_app/SpeechTherapy/scenario_feature.dart';
 import 'Start/login_screen.dart';
@@ -12,24 +13,27 @@ import 'Start/verification_pending_screen.dart';
 import 'SpeechTherapy/speech_therapy.dart';
 import 'SpeechTherapy/picture_to_word.dart';
 import 'firebase_options.dart';
+// import '../Journal/journal_main.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Load environment variables before anything else
-  await dotenv.load(fileName: ".env");
+  // Load environment variables safely
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    print("Warning: .env file not found or failed to load.");
+  }
 
-  // ✅ Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -51,25 +55,22 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
         '/verification': (context) => const VerificationPendingScreen(),
-        '/speech-therapy': (context) => SpeechTherapyPage(
-              user: FirebaseAuth.instance.currentUser,
-            ),
+        '/speech-therapy':
+            (context) =>
+                SpeechTherapyPage(user: FirebaseAuth.instance.currentUser),
         '/pictureToWord': (context) => const PictureToWord(),
         '/scenario': (context) => ScenarioScreen(),
         '/chatbot': (context) => ChatbotScreen(),
-        // '/journal': (context) => const DailyJournalPage(),
+        '/journal': (context) => const JournalMain(),
         '/activities': (context) => const ActivitesMain(),
       },
     );
   }
 }
 
-/// This widget checks if the user is already logged in and verified.
-/// If verified, show HomeScreen. If not verified, show VerificationPendingScreen.
-/// Otherwise, show LoginScreen.
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(

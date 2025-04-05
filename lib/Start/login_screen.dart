@@ -43,10 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Image.asset(
-                      'assets/images/NeuroApp.jpeg',
-                      height: 40,
-                    ),
+                    Image.asset('assets/images/NeuroApp.jpeg', height: 40),
                   ],
                 ),
                 // Vertical space between logo and "Login" text
@@ -92,9 +89,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Login'),
+                  child:
+                      _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Login'),
                 ),
                 const SizedBox(height: 16),
                 // Sign Up prompt
@@ -140,9 +138,9 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
       User? user = userCredential.user;
       if (user != null) {

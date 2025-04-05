@@ -45,10 +45,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
     try {
       // Firebase Auth sign-up
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       // Optionally update displayName, etc.
       if (credential.user != null) {
@@ -60,13 +58,13 @@ class _SignUpPageState extends State<SignUpPage> {
       // Navigate away after successful signup
       Navigator.pushReplacementNamed(context, '/home');
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Signup Error: ${e.message}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Signup Error: ${e.message}')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -84,7 +82,7 @@ class _SignUpPageState extends State<SignUpPage> {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-                
+
                 // Row with the app name and logo
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -107,10 +105,10 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ],
                 ),
-                
+
                 // Spacing before "Signup" text
                 const SizedBox(height: 20),
-                
+
                 // "Signup" text styled in Atkinson Hyperlegible, bold and responsive
                 Text(
                   'Signup',
@@ -120,27 +118,33 @@ class _SignUpPageState extends State<SignUpPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                
+
                 // Additional spacing similar to the login page
                 const SizedBox(height: 40),
-                
+
                 // Profile image (optional)
                 InkWell(
                   onTap: _pickImageFromGallery,
                   child: CircleAvatar(
                     radius: 50,
                     backgroundColor: Colors.grey[300],
-                    backgroundImage: _profileImageFile != null
-                        ? FileImage(_profileImageFile!)
-                        : null,
-                    child: _profileImageFile == null
-                        ? const Icon(Icons.add_a_photo, size: 30, color: Colors.black54)
-                        : null,
+                    backgroundImage:
+                        _profileImageFile != null
+                            ? FileImage(_profileImageFile!)
+                            : null,
+                    child:
+                        _profileImageFile == null
+                            ? const Icon(
+                              Icons.add_a_photo,
+                              size: 30,
+                              color: Colors.black54,
+                            )
+                            : null,
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Nickname TextField
                 TextField(
                   controller: _nicknameController,
@@ -150,7 +154,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Email TextField
                 TextField(
                   controller: _emailController,
@@ -161,7 +165,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Password TextField
                 TextField(
                   controller: _passwordController,
@@ -172,15 +176,15 @@ class _SignUpPageState extends State<SignUpPage> {
                   obscureText: true,
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Create Account Button
                 ElevatedButton(
                   onPressed: _createAccount,
                   child: const Text('Create Account'),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // "Already have an account?" normal + "Login" clickable
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -192,9 +196,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       },
                       child: const Text(
                         "Login",
-                        style: TextStyle(
-                          color: Colors.blue,
-                        ),
+                        style: TextStyle(color: Colors.blue),
                       ),
                     ),
                   ],

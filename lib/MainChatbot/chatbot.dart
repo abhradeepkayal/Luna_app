@@ -4,7 +4,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+// Removed unused Cloud Functions import since we now use Vertex AI.
+import 'package:firebase_vertexai/firebase_vertexai.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -25,7 +26,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   bool _showBotList = false;
   bool _isImageLoading = false;
 
-  final List<String> _botTypes = ['funny', 'wise', 'strict', 'sarcastic', 'friendly'];
+  final List<String> _botTypes = [
+    'funny',
+    'wise',
+    'strict',
+    'sarcastic',
+    'friendly',
+  ];
 
   void _sendMessage() {
     if (_controller.text.isEmpty) return;
@@ -51,20 +58,22 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         .doc('chatbot_$_botType')
         .collection('messages')
         .add({
-      'text': text,
-      'sender': sender,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+          'text': text,
+          'sender': sender,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
   }
 
   void _startListening() async {
     if (await _speech.initialize()) {
       setState(() => _isListening = true);
-      _speech.listen(onResult: (result) {
-        setState(() {
-          _controller.text = result.recognizedWords;
-        });
-      });
+      _speech.listen(
+        onResult: (result) {
+          setState(() {
+            _controller.text = result.recognizedWords;
+          });
+        },
+      );
     }
   }
 
@@ -93,10 +102,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     setState(() {
       _botType = type;
       _messages.clear();
-      _messages.add(ChatMessage(
-        text: "I'm now $_botType bot! Let's chat.",
-        sender: 'bot',
-      ));
+      _messages.add(
+        ChatMessage(text: "I'm now $_botType bot! Let's chat.", sender: 'bot'),
+      );
       _showBotList = false;
     });
   }
@@ -127,12 +135,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: Wrap(
                 spacing: 8,
-                children: _botTypes
-                    .map((type) => ElevatedButton(
-                          onPressed: () => _switchBotType(type),
-                          child: Text(type),
-                        ))
-                    .toList(),
+                children:
+                    _botTypes
+                        .map(
+                          (type) => ElevatedButton(
+                            onPressed: () => _switchBotType(type),
+                            child: Text(type),
+                          ),
+                        )
+                        .toList(),
               ),
             ),
           Expanded(
@@ -146,17 +157,34 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                IconButton(icon: const Icon(Icons.refresh), onPressed: () => setState(() => _messages.clear())),
-                IconButton(icon: Icon(_isListening ? Icons.mic_off : Icons.mic), onPressed: _isListening ? _stopListening : _startListening),
-                IconButton(icon: const Icon(Icons.image), onPressed: _pickImage),
-                IconButton(icon: const Icon(Icons.volume_up), onPressed: () => _readAloud(_controller.text)),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => setState(() => _messages.clear()),
+                ),
+                IconButton(
+                  icon: Icon(_isListening ? Icons.mic_off : Icons.mic),
+                  onPressed: _isListening ? _stopListening : _startListening,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.image),
+                  onPressed: _pickImage,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.volume_up),
+                  onPressed: () => _readAloud(_controller.text),
+                ),
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(hintText: 'Type a message'),
+                    decoration: const InputDecoration(
+                      hintText: 'Type a message',
+                    ),
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.send), onPressed: _sendMessage),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _sendMessage,
+                ),
               ],
             ),
           ),
@@ -195,12 +223,15 @@ class ChatMessage extends StatelessWidget {
 class GeminiAPI {
   static Future<String> getResponse(String message, String botType) async {
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('callGemini');
-      final prompt = "You are a $botType AI assistant. Respond appropriately.\nUser: $message";
-      final result = await callable.call({'message': prompt});
-      return result.data['reply'] ?? "No reply received.";
+      final prompt =
+          "You are a $botType AI assistant. Respond appropriately.\nUser: $message";
+      final model = FirebaseVertexAI.instance.generativeModel(
+        model: 'models/gemini-2.0-flash-001',
+      );
+      final response = await model.generateContent([Content.text(prompt)]);
+      return response.text ?? "No reply received.";
     } catch (e) {
-      debugPrint("Error calling Firebase Function: $e");
+      debugPrint("Error calling Vertex AI: $e");
       return "Something went wrong while talking to Gemini.";
     }
   }

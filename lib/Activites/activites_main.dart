@@ -14,8 +14,14 @@ class ActivitesMain extends StatelessWidget {
         primaryColor: Colors.black,
         textTheme: const TextTheme(
           bodyLarge: TextStyle(fontFamily: 'OpenDyslexic', color: Colors.white),
-          bodyMedium: TextStyle(fontFamily: 'OpenDyslexic', color: Colors.white),
-          titleLarge: TextStyle(fontFamily: 'AtkinsonHyperlegible', color: Colors.white),
+          bodyMedium: TextStyle(
+            fontFamily: 'OpenDyslexic',
+            color: Colors.white,
+          ),
+          titleLarge: TextStyle(
+            fontFamily: 'AtkinsonHyperlegible',
+            color: Colors.white,
+          ),
         ),
       ),
       home: const MyHomePage(),
@@ -42,14 +48,21 @@ class MyHomePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => const JumbledWordsPage(),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    pageBuilder:
+                        (context, animation, secondaryAnimation) =>
+                            const JumbledWordsApp(),
+                    transitionsBuilder: (
+                      context,
+                      animation,
+                      secondaryAnimation,
+                      child,
+                    ) {
                       return FadeTransition(opacity: animation, child: child);
                     },
                   ),
                 );
               },
-              child: Image.asset('assets/images/fouram.png', fit: BoxFit.cover),
+              child: Image.asset('assets/images/Jumble.png', fit: BoxFit.cover),
             ),
             const SizedBox(height: 20),
             GestureDetector(
@@ -57,14 +70,24 @@ class MyHomePage extends StatelessWidget {
                 Navigator.push(
                   context,
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => const PuzzlesPage(),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    pageBuilder:
+                        (context, animation, secondaryAnimation) =>
+                            const PuzzlesPage(),
+                    transitionsBuilder: (
+                      context,
+                      animation,
+                      secondaryAnimation,
+                      child,
+                    ) {
                       return FadeTransition(opacity: animation, child: child);
                     },
                   ),
                 );
               },
-              child: Image.asset('assets/images/codeforces.png', fit: BoxFit.cover),
+              child: Image.asset(
+                'assets/images/Puzzle_f.png',
+                fit: BoxFit.cover,
+              ),
             ),
           ],
         ),

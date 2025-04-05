@@ -16,9 +16,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentPage = 0;
 
   final List<String> _images = [
-    'assets/images/doomscrolling.png',
-    'assets/images/ruskinbond.png', // Second image triggers Speech Therapy
-    'assets/images/mindora.png',
+    'assets/images/Journal.png',
+    'assets/images/FINAL_speech therapy.png', // Second image triggers Speech Therapy
+    'assets/images/activities.png',
     'assets/images/codeforces.png',
     'assets/images/fouram.png',
   ];
@@ -74,13 +74,13 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Row(
           children: [
             Image.asset(
-              'assets/images/NeuroApp.jpeg',
+              'assets/images/Luna_f (2) (1).jpg',
               width: 40,
               height: 40,
             ),
             const SizedBox(width: 10),
             const Text(
-              'NeuroApp',
+              'Luna',
               style: TextStyle(
                 fontFamily: 'AtkinsonHyperlegible',
                 color: Color(0xFFF5F5DC),
@@ -99,11 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const DrawerHeader(
               decoration: BoxDecoration(color: Colors.black26),
               child: Text(
-                'NeuroApp Menu',
-                style: TextStyle(
-                  color: Color(0xFFF5F5DC),
-                  fontSize: 24,
-                ),
+                'Luna Menu',
+                style: TextStyle(color: Color(0xFFF5F5DC), fontSize: 24),
               ),
             ),
             ListTile(
@@ -128,9 +125,12 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 10.0,
+                  ),
                   child: const Text(
-                    "Welcome to NeuroApp! We're here to make your journey fun, "
+                    "Welcome to Luna! We're here to make your journey fun, "
                     "interactive, and supportive. Enjoy a personalized experience "
                     "designed to fit your unique needs.",
                     textAlign: TextAlign.center,
@@ -168,7 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         fit: BoxFit.contain,
                       );
 
-                      if (index == 1) {
+                      if (index == 0) {
+                        imageWidget = GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/journal');
+                          },
+                          child: imageWidget,
+                        );
+                      } else if (index == 1) {
                         imageWidget = GestureDetector(
                           onTap: () {
                             Navigator.pushNamed(context, '/speech-therapy');
@@ -201,9 +208,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: _currentPage == index ? 12 : 8,
                       height: _currentPage == index ? 12 : 8,
                       decoration: BoxDecoration(
-                        color: _currentPage == index
-                            ? const Color(0xFFF5F5DC)
-                            : Colors.grey,
+                        color:
+                            _currentPage == index
+                                ? const Color(0xFFF5F5DC)
+                                : Colors.grey,
                         shape: BoxShape.circle,
                       ),
                     );
@@ -257,15 +265,19 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
       items: [
         const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         const BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Forum'),
-        const BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.search),
+          label: 'Search',
+        ),
         const BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chatbot'),
         BottomNavigationBarItem(
-          icon: widget.user?.photoURL != null
-              ? CircleAvatar(
-                  backgroundImage: NetworkImage(widget.user!.photoURL!),
-                  radius: 12,
-                )
-              : const Icon(Icons.person),
+          icon:
+              widget.user?.photoURL != null
+                  ? CircleAvatar(
+                    backgroundImage: NetworkImage(widget.user!.photoURL!),
+                    radius: 12,
+                  )
+                  : const Icon(Icons.person),
           label: 'Profile',
         ),
       ],

@@ -1,8 +1,5 @@
-/*import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:zefyrka/zefyrka.dart'; // ✅ all you need
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MindDumpPage extends StatefulWidget {
   const MindDumpPage({super.key});
@@ -12,67 +9,36 @@ class MindDumpPage extends StatefulWidget {
 }
 
 class _MindDumpPageState extends State<MindDumpPage> {
-  late ZefyrController _controller;
-  late FocusNode _focusNode;
-  bool _isLoading = true;
-
-  final String docId = FirebaseAuth.instance.currentUser?.uid ?? '';
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final TextEditingController _controller = TextEditingController();
+  late SharedPreferences _prefs;
 
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
-    _controller = ZefyrController(); // temporary empty
-    _loadMindDump();
+    _loadContent();
   }
 
-  Future<void> _loadMindDump() async {
-    if (docId.isEmpty) return;
-
-    final doc = await firestore.collection('mind_dumps').doc(docId).get();
-
-    if (doc.exists) {
-      final data = doc.data();
-      if (data != null && data['content'] != null) {
-        final document = NotusDocument.fromJson(data['content']);
-        setState(() {
-          _controller = ZefyrController(document);
-        });
-      }
+  Future<void> _loadContent() async {
+    _prefs = await SharedPreferences.getInstance();
+    String? savedContent = _prefs.getString('mindDumpContent');
+    if (savedContent != null) {
+      _controller.text = savedContent;
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
-  Future<void> _saveMindDump() async {
-    if (docId.isEmpty) return;
-
-    final content = _controller.document.toJson();
-    await firestore.collection('mind_dumps').doc(docId).set({
-      'content': content,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+  Future<void> _saveContent() async {
+    await _prefs.setString('mindDumpContent', _controller.text);
   }
 
   @override
   void dispose() {
-    _saveMindDump();
-    _focusNode.dispose();
+    _saveContent();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Column(
@@ -87,22 +53,20 @@ class _MindDumpPageState extends State<MindDumpPage> {
         ),
         backgroundColor: Colors.black,
       ),
-      body: Column(
-        children: [
-          ZefyrToolbar.basic(controller: _controller),
-          Expanded(
-            child: Container(
-              color: Colors.black,
-              child: ZefyrEditor(
-                controller: _controller,
-                focusNode: _focusNode,
-                readOnly: false,
-                padding: const EdgeInsets.all(12),
-              ),
-            ),
+      body: Padding(
+        padding: const EdgeInsets.all(10),
+        child: TextField(
+          controller: _controller,
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+          decoration: const InputDecoration(
+            hintText: "Write anything that comes to mind...",
+            border: OutlineInputBorder(),
+            filled: true,
+            fillColor: Colors.black12,
           ),
-        ],
+        ),
       ),
     );
   }
-}*/
+}

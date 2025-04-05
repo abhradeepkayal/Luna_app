@@ -1,103 +1,81 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'mind_dump.dart';
 import 'daily_journal.dart';
 import 'swifty_journal.dart';
 import 'history_page.dart';
 
-void main() {
-  runApp(const NeurofixApp());
-}
-
-class NeurofixApp extends StatelessWidget {
-  const NeurofixApp({super.key});
+class JournalMain extends StatelessWidget {
+  const JournalMain({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Neurofix',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF1C1C1C),
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(
-            color: Color(0xFFF5F5DC),
-            fontFamily: 'OpenDyslexic',
-          ),
-          titleLarge: TextStyle(
-            fontFamily: 'AtkinsonHyperlegible',
-            fontSize: 24,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      home: const MainPage(),
-    );
+    return const Scaffold(body: MainJournalPage());
   }
 }
 
-class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+class MainJournalPage extends StatefulWidget {
+  const MainJournalPage({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  State<MainJournalPage> createState() => _MainJournalPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainJournalPageState extends State<MainJournalPage> {
   bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(child: Text("Neurofix")),
+        title: const Text("Neurofix Journal", textAlign: TextAlign.center),
+        backgroundColor: Colors.black,
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryPage()));
-            },
+            onPressed: () => _navigateToPage(const HistoryPage()),
           ),
         ],
-        backgroundColor: Colors.black,
       ),
-      body: const Center(child: Text("Journal Guide Goes Here")),
+      body: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text(
+            "Your journaling journey starts here! Tap + to begin.",
+            style: TextStyle(fontSize: 18, color: Colors.white70),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_isExpanded) ...[
-            _buildOption("Mind-dump", () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const MindDumpPage()));
-            }),
-            _buildOption("Daily Journal", () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyJournalPage()));
-            }),
-            _buildOption("Swifty Journal", () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const SwiftyJournalPage()));
-            }),
+            _buildOption("Mind-dump", const MindDumpPage()),
+            _buildOption("Daily Journal", const DailyJournalPage()),
+            _buildOption("Swifty Journal", const SwiftyJournalPage()),
           ],
           FloatingActionButton(
-            onPressed: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-              });
-            },
-            child: const Icon(Icons.add),
+            onPressed: () => setState(() => _isExpanded = !_isExpanded),
+            child: Icon(_isExpanded ? Icons.close : Icons.add),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOption(String label, VoidCallback onTap) {
+  Widget _buildOption(String label, Widget page) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: FloatingActionButton.extended(
-        onPressed: onTap,
+        onPressed: () => _navigateToPage(page),
         label: Text(label),
         icon: const Icon(Icons.edit),
         backgroundColor: Colors.grey[800],
       ),
     );
   }
-}*/
+
+  void _navigateToPage(Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+}

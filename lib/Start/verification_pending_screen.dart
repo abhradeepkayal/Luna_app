@@ -8,7 +8,8 @@ class VerificationPendingScreen extends StatefulWidget {
   const VerificationPendingScreen({super.key});
 
   @override
-  State<VerificationPendingScreen> createState() => _VerificationPendingScreenState();
+  State<VerificationPendingScreen> createState() =>
+      _VerificationPendingScreenState();
 }
 
 class _VerificationPendingScreenState extends State<VerificationPendingScreen> {
@@ -46,13 +47,13 @@ class _VerificationPendingScreenState extends State<VerificationPendingScreen> {
     setState(() => _isResending = true);
     try {
       await FirebaseAuth.instance.currentUser?.sendEmailVerification();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Verification email sent!")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Verification email sent!")));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
     }
     setState(() => _isResending = false);
   }
@@ -91,9 +92,10 @@ class _VerificationPendingScreenState extends State<VerificationPendingScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isResending ? null : _resendVerificationEmail,
-              child: _isResending
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Resend Verification Email"),
+              child:
+                  _isResending
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Resend Verification Email"),
             ),
             const SizedBox(height: 10),
             ElevatedButton(

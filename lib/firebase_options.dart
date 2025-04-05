@@ -83,5 +83,4 @@ class DefaultFirebaseOptions {
     authDomain: 'neuroapp-5d6c2.firebaseapp.com',
     storageBucket: 'neuroapp-5d6c2.firebasestorage.app',
   );
-
 }

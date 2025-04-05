@@ -56,10 +56,10 @@ dependencies:
   flutter_dotenv: ^5.2.1
   intl: ^0.17.0
   rxdart: ^0.28.0
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  confetti: ^0.8.0
   cupertino_icons: ^1.0.8
+  audioplayers: ^6.4.0
+  lottie: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -93,7 +93,20 @@ flutter:
       fonts:
         - asset: assets/fonts/open-dyslexic.ttf
 
-  assets: 
+  assets:
+    - assets/images/toDo.gif
+    - assets/images/funny_bot.jpg
+    - assets/images/chill_guy.jpg
+    - assets/images/Journal.png
+    - assets/images/Jumble.png
+    - assets/images/doctor.png
+    - assets/images/restaurant.png
+    - assets/images/FINAL_speech therapy.png
+    - assets/images/PICTURE.png
+    - assets/images/Puzzle_f.png
+    - assets/images/activities.png
+    - assets/images/Luna_f (2) (1).jpg
+    - assets/images/Sura_f.jpg
     - assets/images/NeuroApp.jpeg
     - assets/images/codeforces.png
     - assets/images/doomscrolling.png
@@ -102,6 +115,10 @@ flutter:
     - assets/images/ruskinbond.png
     - assets/images/fouram.png
     - .env
+    - assets/sounds/correct.mp3
+    - assets/sounds/wrong.mp3
+
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
