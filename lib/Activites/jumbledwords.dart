@@ -270,9 +270,12 @@ class _JumbledWordsGameState extends State<JumbledWordsGame> {
     return characters.join();
   }
 
+  // Updated _checkAnswer function using AI to validate the answer.
   void _checkAnswer() async {
     String userAnswer = _controller.text.trim().toLowerCase();
-    if (userAnswer == _originalWord.toLowerCase()) {
+    // Call the AI helper to validate if the user's answer is a correct unscrambling
+    bool isValid = await AIHelper.validateAnswer(_jumbledWord, userAnswer);
+    if (isValid) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Correct! 🎉")));
@@ -405,13 +408,13 @@ class AIHelper {
     String prompt;
     if (level >= 1 && level <= 10) {
       prompt =
-          "Generate random common easy, single English word, each 4 to 6 letters long, for difficulty level $level. Just a single word. All should be in lowercase. Generate 10 such words one by one each after the user guesses correctly. Don't generate 10 words at once";
+          "Generate 10 random common English words. Each word must be between 4 and 6 letters long (inclusive) and in lowercase. Return the words separated by commas with no extra text or punctuation.";
     } else if (level >= 11 && level <= 20) {
       prompt =
-          "Generate random complex, single English words, more than 6 letters long, for difficulty level $level. Just a single word. All in lowercase.Generate 10 such words one by one each after the user guesses correctly.";
+          "Generate 10 random common English words. Each word must be between 6 and 10 letters long (inclusive) and in lowercase. Return the words separated by commas with no extra text or punctuation.";
     } else {
       prompt =
-          "Generate extremely challenging, almost impossible-to-guess single English words for difficulty level $level. Just a single word. All in lowercase.Generate 10 such words one by one each after the user guesses correctly.";
+          "Generate 10 random challenging English words. Each word must be more than 10 letters long and in lowercase. Return the words separated by commas with no extra text or punctuation.";
     }
     final response = await model.generateContent([Content.text(prompt)]);
     List<String> words =
@@ -422,6 +425,23 @@ class AIHelper {
             .toList() ??
         ["flutter"];
     return words;
+  }
+
+  // New helper method to validate the user's answer.
+  // It sends the jumbled word and the user’s answer to the AI model.
+  // The prompt instructs the model to respond with only "yes" or "no".
+  static Future<bool> validateAnswer(
+    String jumbledWord,
+    String userAnswer,
+  ) async {
+    final model = FirebaseVertexAI.instance.generativeModel(
+      model: 'models/gemini-2.0-flash-001',
+    );
+    String prompt =
+        "Given the jumbled letters '$jumbledWord' and the user's guess '$userAnswer', determine if the guess is a valid unscrambling of these letters into a correct English word. Answer only with 'yes' or 'no' and nothing else.";
+    final response = await model.generateContent([Content.text(prompt)]);
+    String answer = response.text?.trim().toLowerCase() ?? "no";
+    return answer.contains("yes");
   }
 
   static Future<String> getHint(String word) async {
