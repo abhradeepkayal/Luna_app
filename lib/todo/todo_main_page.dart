@@ -8,6 +8,9 @@ import 'package:firebase_vertexai/firebase_vertexai.dart';
 //import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// Define the deep golden accent (#FFBF00).
+const deepGold = Color(0xFFFFBF00);
+
 class TodoMainPage extends StatefulWidget {
   const TodoMainPage({super.key});
 
@@ -28,7 +31,8 @@ class _TodoMainPageState extends State<TodoMainPage> {
   void _showDailySummary() async {
     // Build a prompt using all task titles.
     String taskTitles = tasks.map((t) => t.title).join(', ');
-    String prompt = '''Summarize the following to-do list into a concise daily overview.
+    String prompt =
+        '''Summarize the following to-do list into a concise daily overview.
      Keep the language clear and to the point. Avoid using bold text or any extra formatting.
      Focus on key tasks and group similar items if applicable.: $taskTitles''';
     try {
@@ -39,32 +43,112 @@ class _TodoMainPageState extends State<TodoMainPage> {
       final summary = response.text;
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: Colors.black87,
-          title: const Text("🧠 AI Summary", style: TextStyle(color: Colors.white)),
-          content: Text(summary ?? "No summary available.", style: const TextStyle(color: Colors.white70)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close", style: TextStyle(color: Colors.amberAccent)),
-            )
-          ],
-        ),
+        builder:
+            (_) => AlertDialog(
+              backgroundColor: Colors.grey[900],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: deepGold, width: 1),
+              ),
+              title: const Text(
+                "🧠 AI Summary",
+                style: TextStyle(
+                  fontFamily: 'AtkinsonHyperlegible',
+                  color: Color(0xFFFFF9F0),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                      color: deepGold,
+                    ),
+                  ],
+                ),
+              ),
+              content: Text(
+                summary ?? "No summary available.",
+                style: const TextStyle(
+                  fontFamily: 'AtkinsonHyperlegible',
+                  color: Colors.white70,
+                  fontSize: 16,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black54,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    "Close",
+                    style: TextStyle(
+                      fontFamily: 'AtkinsonHyperlegible',
+                      color: deepGold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
       );
     } catch (e) {
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: Colors.black87,
-          title: const Text("🧠 AI Summary", style: TextStyle(color: Colors.white)),
-          content: Text("Error generating summary: $e", style: const TextStyle(color: Colors.white70)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close", style: TextStyle(color: Colors.amberAccent)),
-            )
-          ],
-        ),
+        builder:
+            (_) => AlertDialog(
+              backgroundColor: Colors.grey[900],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: deepGold, width: 1),
+              ),
+              title: const Text(
+                "🧠 AI Summary",
+                style: TextStyle(
+                  fontFamily: 'AtkinsonHyperlegible',
+                  color: Color(0xFFFFF9F0),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                      color: deepGold,
+                    ),
+                  ],
+                ),
+              ),
+              content: Text(
+                "Error generating summary: $e",
+                style: const TextStyle(
+                  fontFamily: 'AtkinsonHyperlegible',
+                  color: Colors.white70,
+                  fontSize: 16,
+                  shadows: [
+                    Shadow(
+                      offset: Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black54,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    "Close",
+                    style: TextStyle(
+                      fontFamily: 'AtkinsonHyperlegible',
+                      color: deepGold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
       );
     }
   }
@@ -81,55 +165,84 @@ class _TodoMainPageState extends State<TodoMainPage> {
           .orderBy('timestamp', descending: true)
           .snapshots()
           .listen((snapshot) {
-        List<Task> firebaseTasks = snapshot.docs
-            .map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>, id: doc.id))
-            .toList();
-        setState(() {
-          tasks = firebaseTasks;
-        });
-      });
+            List<Task> firebaseTasks =
+                snapshot.docs
+                    .map(
+                      (doc) => Task.fromMap(
+                        doc.data() as Map<String, dynamic>,
+                        id: doc.id,
+                      ),
+                    )
+                    .toList();
+            setState(() {
+              tasks = firebaseTasks;
+            });
+          });
     }
+  }
+
+  // Helper widget for app bar icons with a simple border effect.
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: deepGold, width: 1),
+      ),
+      child: IconButton(
+        icon: Icon(icon),
+        tooltip: tooltip,
+        color: const Color(0xFFFFF9F0),
+        iconSize: 28,
+        onPressed: onPressed,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final greeting = DateTime.now().hour < 12
-        ? "Good morning"
-        : DateTime.now().hour < 18
+    final greeting =
+        DateTime.now().hour < 12
+            ? "Good morning"
+            : DateTime.now().hour < 18
             ? "Good afternoon"
             : "Good evening";
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.grey[900],
+        elevation: 8,
         centerTitle: true,
         title: const Text(
-          'NeuroApp',
+          'To-Do List',
           style: TextStyle(
             fontFamily: 'AtkinsonHyperlegible',
             color: Color(0xFFFFF9F0),
-            fontSize: 24,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
+            shadows: [
+              Shadow(offset: Offset(2, 2), blurRadius: 4, color: deepGold),
+            ],
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.summarize),
-            color: const Color(0xFFFFF9F0),
+          _buildIconButton(
+            icon: Icons.summarize,
             tooltip: 'AI Daily Summary',
             onPressed: _showDailySummary,
           ),
-          IconButton(
-            icon: const Icon(Icons.show_chart),
-            color: const Color(0xFFFFF9F0),
+          _buildIconButton(
+            icon: Icons.show_chart,
             tooltip: 'View Progress',
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => ProgressPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const ProgressPage()),
               );
             },
           ),
@@ -142,18 +255,38 @@ class _TodoMainPageState extends State<TodoMainPage> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // Header Section
-                Align(
-                  alignment: Alignment.centerLeft,
+                // Header Section with an elevated 3D effect.
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: deepGold.withOpacity(0.5),
+                        offset: const Offset(4, 4),
+                        blurRadius: 8,
+                      ),
+                    ],
+                    border: Border.all(color: deepGold, width: 1),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         '$greeting!',
                         style: const TextStyle(
+                          fontFamily: 'OpenDyslexic',
                           fontSize: 20,
                           color: Colors.orangeAccent,
                           fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                              color: Colors.black54,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -164,24 +297,54 @@ class _TodoMainPageState extends State<TodoMainPage> {
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFFFF9F0),
+                          shadows: [
+                            Shadow(
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                              color: Colors.black54,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         DateFormat.yMMMMEEEEd().format(DateTime.now()),
                         style: TextStyle(
+                          fontFamily: 'AtkinsonHyperlegible',
                           fontSize: 16,
                           color: const Color(0xFFFFF9F0).withOpacity(0.8),
+                          shadows: [
+                            Shadow(
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                              color: Colors.black54,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Task Input and List Section
-                TaskInputWidget(
-                  onTaskListChanged: updateTasks,
-                  selectedCategory: selectedCategory,
+                // Task Input and List Section with a raised card effect.
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: deepGold.withOpacity(0.5),
+                        offset: const Offset(4, 4),
+                        blurRadius: 8,
+                      ),
+                    ],
+                    border: Border.all(color: deepGold, width: 1),
+                  ),
+                  child: TaskInputWidget(
+                    onTaskListChanged: updateTasks,
+                    selectedCategory: selectedCategory,
+                  ),
                 ),
               ],
             ),

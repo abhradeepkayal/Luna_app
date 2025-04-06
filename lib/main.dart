@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:neuro_app/Activites/activites_main.dart';
-import 'package:neuro_app/Journal/journal_main.dart';
-import 'package:neuro_app/MainChatbot/chatbot.dart';
-import 'package:neuro_app/SpeechTherapy/scenario_feature.dart';
-import 'package:neuro_app/aboutus.dart';
-import 'package:neuro_app/contact.dart';
+import 'package:Luna/Activites/activites_main.dart';
+import 'package:Luna/Journal/journal_main.dart';
+import 'package:Luna/MainChatbot/chatbot.dart';
+import 'package:Luna/SpeechTherapy/scenario_feature.dart';
+import 'package:Luna/aboutus.dart';
+import 'package:Luna/contact.dart';
+import 'package:Luna/forum.dart';
 import 'Start/login_screen.dart';
 import 'Start/home_screen.dart';
 import 'Start/verification_pending_screen.dart';
@@ -19,6 +20,10 @@ import 'todo/todo_main_page.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:Luna/profile.dart';
+import 'package:Luna/search.dart';
+import 'package:video_player/video_player.dart'; // Added for splash video
+
 // import '../Journal/journal_main.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -26,7 +31,9 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 Future<void> initializeNotifications() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher'); // Make sure you have this icon in your project.
+      AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      ); // Make sure you have this icon in your project.
 
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
@@ -34,7 +41,6 @@ Future<void> initializeNotifications() async {
 
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 }
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +67,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Neuro App',
+      title: 'Luna',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
@@ -74,7 +81,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF121212),
         fontFamily: 'OpenDyslexic',
       ),
-      home: const AuthWrapper(),
+      home: const SplashScreenWrapper(), // Modified to add splash video
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
@@ -89,8 +96,11 @@ class MyApp extends StatelessWidget {
         '/activities': (context) => const ActivitesMain(),
         '/visual': (context) => CalmingMusicHome(),
         '/todo': (context) => const TodoMainPage(),
-        '/aboutUs':(context) => const AboutUsPage(),
-        '/contact':(context) => const ContactPage(),
+        '/aboutUs': (context) => const AboutUsPage(),
+        '/contact': (context) => const ContactPage(),
+        '/profile': (context) => const ProfilePage(),
+        '/search': (context) => const SearchPage(),
+        '/forum': (context) => const ForumPage(),
       },
     );
   }
@@ -115,6 +125,55 @@ class AuthWrapper extends StatelessWidget {
           return const LoginScreen();
         }
       },
+    );
+  }
+}
+
+// --- Added Splash Video Functionality Below ---
+class SplashScreenWrapper extends StatefulWidget {
+  const SplashScreenWrapper({super.key});
+
+  @override
+  _SplashScreenWrapperState createState() => _SplashScreenWrapperState();
+}
+
+class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
+  late VideoPlayerController _controller;
+  bool _videoFinished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.asset("assets/splash_video.mp4")
+      ..initialize().then((_) {
+        setState(() {}); // Refresh to show the initialized video
+        _controller.play();
+      });
+    _controller.addListener(() {
+      if (_controller.value.isInitialized &&
+          _controller.value.position >= _controller.value.duration &&
+          !_videoFinished) {
+        _videoFinished = true;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const AuthWrapper()),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body:
+          _controller.value.isInitialized
+              ? VideoPlayer(_controller)
+              : Container(color: Colors.black),
     );
   }
 }

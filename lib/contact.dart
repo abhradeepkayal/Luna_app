@@ -7,9 +7,9 @@ class ContactPage extends StatelessWidget {
   Future<void> _launchURL(BuildContext context, String url) async {
     final uri = Uri.parse(url);
     if (!await canLaunchUrl(uri)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open $url')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open $url')));
       return;
     }
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -22,27 +22,63 @@ class ContactPage extends StatelessWidget {
     required String url,
     required Color color,
   }) {
-    return Card(
-      color: Colors.grey[850],
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 3,
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFBF00), width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.7),
+            offset: const Offset(3, 3),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.03),
+            offset: const Offset(-3, -3),
+            blurRadius: 10,
+          ),
+        ],
+      ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          radius: 24,
-          backgroundColor: color,
-          child: Icon(icon, color: Colors.white, size: 28),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        leading: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFFFBF00), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 4,
+                offset: const Offset(1, 2),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 26,
+            backgroundColor: color,
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
         ),
         title: Text(
           label,
           style: const TextStyle(
             fontFamily: 'AtkinsonHyperlegible',
             fontSize: 18,
-            color: Colors.white,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFFFFF5E1),
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          color: Color(0xFFFFBF00),
+          size: 18,
+        ),
         onTap: () => _launchURL(context, url),
       ),
     );
@@ -51,45 +87,44 @@ class ContactPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[900],
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         leading: IconButton(
-    icon: Icon(
-  Theme.of(context).platform == TargetPlatform.iOS
-      ? Icons.arrow_back_ios
-      : Icons.arrow_back,
-  color: Colors.white,
-),
-
-    onPressed: () {
-      Navigator.pop(context);
-    },
-  ),
+          icon: Icon(
+            Theme.of(context).platform == TargetPlatform.iOS
+                ? Icons.arrow_back_ios
+                : Icons.arrow_back,
+            color: const Color(0xFFFFF5E1),
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: const Text(
           'Contact Us',
           style: TextStyle(
             fontFamily: 'AtkinsonHyperlegible',
             fontWeight: FontWeight.bold,
             fontSize: 28,
-            color: Colors.white,
+            color: Color(0xFFFFBF00),
           ),
         ),
-        backgroundColor: Colors.black,
-        elevation: 0,
+        backgroundColor: const Color(0xFF1C1C1E),
+        elevation: 8,
+        shadowColor: Colors.black.withOpacity(0.8),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Intro Text
             const Text(
               'We’d love to hear from you!',
               style: TextStyle(
                 fontFamily: 'AtkinsonHyperlegible',
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Color(0xFFFFF5E1),
               ),
             ),
             const SizedBox(height: 8),
@@ -99,13 +134,11 @@ class ContactPage extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'OpenDyslexic',
                 fontSize: 16,
-                color: Colors.white70,
+                color: Color(0xFFCCCCCC),
                 height: 1.4,
               ),
             ),
             const SizedBox(height: 24),
-
-            // Contact Cards
             _buildContactCard(
               context: context,
               icon: Icons.email,

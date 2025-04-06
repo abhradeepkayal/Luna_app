@@ -1,4 +1,7 @@
+// lib/pages/swifty_journal.dart
+
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,10 +10,14 @@ import 'package:intl/intl.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:image_picker/image_picker.dart';
 
 class GeminiService {
-  static const String _personaPrompt =
-      "Sura is a light-hearted, cute and compassionate chatbot. She is not an assistant. She avoids factual topics and instead responds warmly, playfully or with humor. If the user asks anything boring or too serious, she gently changes the topic to something casual like 'How was your day?' or 'Tell me something fun!'\n\nYou are talking to Sura. Here's the message: ";
+  static const String _personaPrompt = """
+Sura is a light-hearted, cute and compassionate chatbot. She is not an assistant. She avoids factual topics and instead responds warmly, playfully or with humor. If the user asks anything boring or too serious, she gently changes the topic to something casual like 'How was your day?' or 'Tell me something fun!'
+
+You are talking to Sura. Here's the message:
+""";
 
   static Future<String> getSuraReply(String prompt) async {
     final fullPrompt = _personaPrompt + prompt;
@@ -23,253 +30,441 @@ class GeminiService {
 }
 
 class SwiftyJournalPage extends StatefulWidget {
-  const SwiftyJournalPage({super.key});
-
+  const SwiftyJournalPage({Key? key}) : super(key: key);
   @override
   State<SwiftyJournalPage> createState() => _SwiftyJournalPageState();
 }
 
 class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
   final TextEditingController _controller = TextEditingController();
-  // Store messages as a Map for ordering and potential future use
-  final List<Map<String, dynamic>> _messages = [];
-  late FlutterTts _flutterTts;
-  late stt.SpeechToText _speechToText;
-  late FirebaseFirestore _firestore;
+  final List<File> _attachedImages = [];
+  late FlutterTts _tts;
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  int _speakingIndex = -1;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  static const Color bgColor = Color(0xFF121212);
+  static const Color accentColor = Color(0xFFFFBF00);
+  static const Color textColor = Color(0xFFFAF3E0);
+  static const Color userBubbleColor = Color(0xFFCC9A00); // dark yellow
+  static const Color suraBubbleColor = Color(0xFFD81B60); // pink
+  static const Color userBorder = Color(0xFFB58900);
+  static const Color suraBorder = Color(0xFF880E4F);
+  static const Color cardColor = Color(0xFF1E1E1E); // Define cardColor
 
   @override
   void initState() {
     super.initState();
-    _flutterTts = FlutterTts();
-    _speechToText = stt.SpeechToText();
-    _firestore = FirebaseFirestore.instance;
-    _loadMessages();
+    _tts = FlutterTts();
+    _speech = stt.SpeechToText();
+    _archiveOldChats();
   }
 
-  // Load today's messages sorted by timestamp (00:00 to 23:59:59)
-  void _loadMessages() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final uid = user.uid;
+  Future<void> _archiveOldChats() async {
+    final u = FirebaseAuth.instance.currentUser;
+    if (u == null) return;
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final querySnapshot =
+    final old =
         await _firestore
-            .collection('chats')
-            .where('uid', isEqualTo: uid)
-            .where('date', isEqualTo: today)
-            .orderBy('timestamp')
+            .collection('chat_journals')
+            .where('uid', isEqualTo: u.uid)
+            .where('date', isLessThan: today)
             .get();
-
-    setState(() {
-      _messages.clear();
-      for (var doc in querySnapshot.docs) {
-        _messages.add({
-          'message': doc['message'],
-          'timestamp': doc['timestamp'],
-        });
-      }
-    });
-  }
-
-  // Send message and save to Firestore
-  void _sendMessage() async {
-    final input = _controller.text.trim();
-    if (input.isEmpty) return;
-
-    final user = FirebaseAuth.instance.currentUser;
-    final uid = user?.uid;
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    // Save the user's message
-    final userMessage = "You: $input";
-    setState(() {
-      _messages.add({'message': userMessage});
-    });
-    await _firestore.collection('chats').add({
-      'message': userMessage,
-      'uid': uid,
-      'date': today,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    _controller.clear();
-
-    // Retrieve Sura's reply
-    final response = await GeminiService.getSuraReply(input);
-    final suraMessage = "Sura: $response";
-    setState(() {
-      _messages.add({'message': suraMessage});
-    });
-
-    // Save Sura's reply
-    await _firestore.collection('chats').add({
-      'message': suraMessage,
-      'uid': uid,
-      'date': today,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-  }
-
-  // Start listening to user's voice
-  void _startListening() async {
-    if (await _speechToText.initialize()) {
-      _speechToText.listen(
-        onResult: (result) {
-          setState(() {
-            _controller.text = result.recognizedWords;
-          });
-        },
-      );
+    for (var d in old.docs) {
+      await FirebaseFirestore.instance
+          .collection('journal_history')
+          .doc(d.id)
+          .set(d.data());
+      await d.reference.delete();
     }
   }
 
-  // Speak out the message using TTS
-  void _speakMessage(String message) async {
-    await _flutterTts.speak(message);
+  ImageProvider _userAvatar() {
+    final u = FirebaseAuth.instance.currentUser;
+    if (u != null && u.photoURL != null) {
+      return NetworkImage(u.photoURL!);
+    }
+    return const AssetImage("assets/images/default_user_avatar.png");
+  }
+
+  Future<void> _sendMessage() async {
+    final txt = _controller.text.trim();
+    if (txt.isEmpty && _attachedImages.isEmpty) return;
+    final u = FirebaseAuth.instance.currentUser;
+    if (u == null) return;
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    final userData = {
+      'message': txt,
+      'images': _attachedImages.map((f) => f.path).toList(),
+      'sender': 'user',
+      'uid': u.uid,
+      'date': today,
+      'timestamp': FieldValue.serverTimestamp(),
+    };
+    await _firestore.collection('chat_journals').add(userData);
+    _controller.clear();
+    setState(() => _attachedImages.clear());
+
+    final reply = await GeminiService.getSuraReply(txt);
+    final suraData = {
+      'message': reply,
+      'images': null,
+      'sender': 'sura',
+      'uid': u.uid,
+      'date': today,
+      'timestamp': FieldValue.serverTimestamp(),
+    };
+    await _firestore.collection('chat_journals').add(suraData);
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_isListening) {
+      if (await _speech.initialize()) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (r) {
+            _controller.text = r.recognizedWords;
+          },
+        );
+      }
+    } else {
+      await _speech.stop();
+      setState(() => _isListening = false);
+    }
+  }
+
+  Future<void> _toggleSpeaking(int idx, String msg) async {
+    if (_speakingIndex == idx) {
+      await _tts.stop();
+      setState(() => _speakingIndex = -1);
+    } else {
+      if (_speakingIndex != -1) await _tts.stop();
+      setState(() => _speakingIndex = idx);
+      await _tts.speak(msg);
+      _tts.setCompletionHandler(() => setState(() => _speakingIndex = -1));
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final p = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (p != null) setState(() => _attachedImages.add(File(p.path)));
+  }
+
+  Widget _iconButton(IconData icon, VoidCallback onTap, {Color? color}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: bgColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: accentColor, width: 1.2),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black45,
+              offset: Offset(1, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+        child: Icon(icon, color: color ?? accentColor, size: 20),
+      ),
+    );
+  }
+
+  Widget _messageBubble(Map<String, dynamic> m, int idx) {
+    final msg = m['message'] as String;
+    final isSura = m['sender'] == 'sura';
+    final imgs = (m['images'] as List?)?.cast<String>() ?? [];
+    final bubbleColor = isSura ? suraBubbleColor : userBubbleColor;
+    final borderColor = isSura ? suraBorder : userBorder;
+    final align = isSura ? CrossAxisAlignment.start : CrossAxisAlignment.end;
+    final rowAlign = isSura ? MainAxisAlignment.start : MainAxisAlignment.end;
+
+    Widget _buildImages() {
+      return Column(
+        children:
+            imgs
+                .map(
+                  (p) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(File(p), fit: BoxFit.cover),
+                    ),
+                  ),
+                )
+                .toList(),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: rowAlign,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isSura)
+          CircleAvatar(
+            backgroundImage: const AssetImage("assets/images/Sura_f.jpg"),
+            radius: 20,
+          ),
+        if (isSura) const SizedBox(width: 8),
+        Container(
+          constraints: const BoxConstraints(maxWidth: 260),
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: bubbleColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor, width: 1.5),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black45,
+                offset: Offset(2, 2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: align,
+            children: [
+              if (imgs.isNotEmpty) _buildImages(),
+              Text(
+                msg,
+                style: const TextStyle(
+                  color: textColor,
+                  fontFamily: 'OpenDyslexic',
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!isSura) const SizedBox(width: 8),
+        if (!isSura) CircleAvatar(backgroundImage: _userAvatar(), radius: 20),
+        if (isSura) const Spacer(),
+        IconButton(
+          icon: Icon(
+            Icons.volume_up,
+            color: _speakingIndex == idx ? Colors.green : accentColor,
+            size: 20,
+          ),
+          onPressed: () => _toggleSpeaking(idx, msg),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final u = FirebaseAuth.instance.currentUser;
+    if (u == null)
+      return Scaffold(
+        body: Center(
+          child: Text("Please sign in", style: TextStyle(color: textColor)),
+        ),
+      );
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final stream =
+        _firestore
+            .collection('chat_journals')
+            .where('uid', isEqualTo: u.uid)
+            .where('date', isEqualTo: today)
+            .orderBy('timestamp')
+            .snapshots();
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Swifty Journal",
-              style: TextStyle(
-                fontFamily: 'Atkinson Hyperlegible',
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
+      backgroundColor: bgColor,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: AppBar(
+          backgroundColor: bgColor,
+          elevation: 0,
+          flexibleSpace: SafeArea(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: accentColor, width: 1.5),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    backgroundImage: AssetImage("assets/images/Sura_f.jpg"),
+                    radius: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        "Swifty Journal ✨",
+                        style: TextStyle(
+                          fontFamily: 'AtkinsonHyperlegible',
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: accentColor,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black54,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        "with your buddy Sura 😄",
+                        style: TextStyle(
+                          fontFamily: 'OpenDyslexic',
+                          fontSize: 14,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            Text(
-              "Your Journalling Companion😂",
-              style: TextStyle(fontSize: 14, color: Colors.white70),
-            ),
-          ],
+          ),
         ),
-        backgroundColor: Colors.black,
       ),
-      body: Container(
-        color: const Color(0xFF121212), // Dark aesthetic background
-        child: Column(
-          children: [
-            Expanded(
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: stream,
+              builder: (c, snap) {
+                if (snap.hasError)
+                  return Center(
+                    child: Text("Error", style: TextStyle(color: textColor)),
+                  );
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation(accentColor),
+                    ),
+                  );
+                }
+                final docs = snap.data!.docs;
+                if (docs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      "No messages yet",
+                      style: TextStyle(color: textColor),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: docs.length,
+                  itemBuilder: (ctx, i) {
+                    final data = docs[i].data() as Map<String, dynamic>;
+                    return _messageBubble(data, i);
+                  },
+                );
+              },
+            ),
+          ),
+          if (_attachedImages.isNotEmpty)
+            SizedBox(
+              height: 90,
               child: ListView.builder(
-                padding: const EdgeInsets.all(8),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final messageData = _messages[index];
-                  final message = messageData['message'] as String;
-                  final bool isSuraMessage = message.startsWith("Sura:");
-
-                  if (isSuraMessage) {
-                    // Received messages: Gradient purple background with speaker button on the left
-                    return Align(
-                      alignment: Alignment.centerLeft,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                scrollDirection: Axis.horizontal,
+                itemCount: _attachedImages.length,
+                itemBuilder:
+                    (_, i) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Stack(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.volume_up),
-                            iconSize: 20,
-                            color: Colors.white,
-                            onPressed: () => _speakMessage(message),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              _attachedImages[i],
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF8E2DE2),
-                                    Color(0xFF4A00E0),
+                          Positioned(
+                            top: -4,
+                            right: -4,
+                            child: GestureDetector(
+                              onTap:
+                                  () => setState(
+                                    () => _attachedImages.removeAt(i),
+                                  ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black45,
+                                      offset: Offset(1, 1),
+                                      blurRadius: 2,
+                                    ),
                                   ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
                                 ),
-                              ),
-                              child: Text(
-                                message.replaceFirst("Sura: ", ""),
-                                style: const TextStyle(
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 16,
                                   color: Colors.white,
-                                  fontFamily: 'Open Dyslexic',
-                                  fontSize: 16,
                                 ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                    );
-                  } else {
-                    // Sent messages: Solid black background
-                    return Align(
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          message.replaceFirst("You: ", ""),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'Open Dyslexic',
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                },
+                    ),
               ),
             ),
-            // Input area
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: cardColor,
+              border: Border(top: BorderSide(color: accentColor, width: 1.5)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: accentColor, width: 1.2),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: TextField(
                       controller: _controller,
-                      decoration: InputDecoration(
+                      style: const TextStyle(
+                        color: textColor,
+                        fontFamily: 'OpenDyslexic',
+                      ),
+                      decoration: const InputDecoration(
                         hintText: "Talk to Sura...",
-                        filled: true,
-                        fillColor: Colors.white24,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
+                        hintStyle: TextStyle(color: Colors.white54),
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
-                  // Speech-to-text mic button
-                  IconButton(
-                    onPressed: _startListening,
-                    icon: const Icon(Icons.mic),
-                  ),
-                  // Send button remains as is
-                  IconButton(
-                    onPressed: _sendMessage,
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
-              ),
+                ),
+                _iconButton(Icons.image, _pickImage),
+                _iconButton(
+                  Icons.mic,
+                  _toggleListening,
+                  color: _isListening ? Colors.red : accentColor,
+                ),
+                _iconButton(Icons.send, _sendMessage),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

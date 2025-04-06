@@ -1,4 +1,4 @@
-name: neuro_app
+name: Luna
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -66,11 +66,17 @@ dependencies:
   flutter_markdown: ^0.7.7
   emoji_picker_flutter: ^4.3.0
   path: ^1.9.1
+  
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.14.3
   flutter_test:
     sdk: flutter
 
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/luna.png"
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -100,6 +106,7 @@ flutter:
         - asset: assets/fonts/open-dyslexic.ttf
 
   assets:
+    - assets/splash_video.mp4
     - assets/images/toDo.gif
     - assets/images/funny_bot.jpg
     - assets/images/chill_guy.jpg
@@ -148,7 +155,26 @@ flutter:
     - assets/videos/sleep_bg.mp4
     - assets/videos/soothing_bg.mp4
     - assets/videos/spiritual_bg.mp4
-
+    - assets/images/visuals.jpg
+    - assets/images/scenarios.png
+    - assets\images\journalguide_pages-to-jpg-0001.jpg
+    - assets\images\journalguide_pages-to-jpg-0002.jpg
+    - assets\images\journalguide_pages-to-jpg-0003.jpg
+    - assets\images\journalguide_pages-to-jpg-0004.jpg
+    - assets\images\journalguide_pages-to-jpg-0005.jpg
+    - assets\images\journalguide_pages-to-jpg-0006.jpg
+    - assets\images\journalguide_pages-to-jpg-0007.jpg
+    - assets\images\journalguide_pages-to-jpg-0008.jpg
+    - assets\images\journalguide_pages-to-jpg-0009.jpg
+    - assets\images\journalguide_pages-to-jpg-0010.jpg
+    - assets\images\journalguide_pages-to-jpg-0011.jpg
+    - assets\images\journalguide_pages-to-jpg-0012.jpg
+    - assets\images\journalguide_pages-to-jpg-0013.jpg
+    - assets\images\journalguide_pages-to-jpg-0014.jpg
+    - assets\images\aditya.jpg
+    - assets\images\abhradeep.jpg
+    - assets\images\yash.jpg
+    - assets\images\anik.jpg
 
 
   # The following line ensures that the Material Icons font is

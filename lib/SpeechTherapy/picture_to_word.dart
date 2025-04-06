@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:string_similarity/string_similarity.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // for environment variables
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PictureToWord extends StatefulWidget {
   const PictureToWord({super.key});
@@ -41,16 +41,12 @@ class _PictureToWordState extends State<PictureToWord>
     super.dispose();
   }
 
-  /// Orchestrates AI tag generation + image fetch + UI updates
   Future<void> _loadRandomImage() async {
     setState(() => _isLoading = true);
-
-    // 1) Generate a tag via Vertex AI
     currentTag = await _generateTagFromAI();
-
-    // 2) Fetch image URL for that tag
     final fetchedUrl = await _fetchImageUrl(currentTag);
-    imageUrl = fetchedUrl ??
+    imageUrl =
+        fetchedUrl ??
         'https://via.placeholder.com/400x300.png?text=${Uri.encodeComponent(currentTag)}';
 
     _controller.clear();
@@ -60,13 +56,12 @@ class _PictureToWordState extends State<PictureToWord>
     });
   }
 
-  /// Calls Gemini-2.0-Flash-Lite to pick a random common noun tag
   Future<String> _generateTagFromAI() async {
     final model = FirebaseVertexAI.instance.generativeModel(
       model: 'models/gemini-2.0-flash-lite-001',
     );
 
-    final prompt = '''
+    const prompt = '''
 Pick exactly one common everyday object (in singular form) at random, such as "apple", "dog", or "chair". Respond with only that single word, no punctuation or explanation.
 ''';
 
@@ -80,11 +75,9 @@ Pick exactly one common everyday object (in singular form) at random, such as "a
       debugPrint('Tag generation error: $e');
     }
 
-    // Fallback to a generic tag
     return 'object';
   }
 
-  /// Uses Google Custom Search to fetch an image URL for [tag]
   Future<String?> _fetchImageUrl(String tag) async {
     final apiKey = dotenv.env['GOOGLE_API_KEY'];
     final cx = dotenv.env['CUSTOM_SEARCH_ENGINE_ID'];
@@ -110,7 +103,6 @@ Pick exactly one common everyday object (in singular form) at random, such as "a
     return null;
   }
 
-  /// Checks user’s answer and generates AI feedback + joke
   Future<void> checkAnswer([_]) async {
     final userAnswer = _controller.text.trim().toLowerCase();
     final expected = currentTag.toLowerCase();
@@ -128,7 +120,6 @@ Pick exactly one common everyday object (in singular form) at random, such as "a
     });
   }
 
-  /// Uses Gemini-2.0-Flash to craft feedback and a two‑line joke
   Future<String> _generateAIResponse({
     required String userAnswer,
     required String correctTag,
@@ -157,84 +148,180 @@ Respond in two concise paragraphs, no filler.
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    final creamyWhite = const Color(0xFFFFF8E7);
+    const gold = Color(0xFFFFBF00);
+    const darkGrey = Color(0xFF1A1A1A);
+
+    final theme = Theme.of(context).copyWith(
+      scaffoldBackgroundColor: darkGrey,
+      textTheme: Theme.of(context).textTheme.apply(
+        bodyColor: creamyWhite,
+        displayColor: creamyWhite,
+        fontFamilyFallback: ['Atkinson Hyperlegible', 'OpenDyslexic'],
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.black54,
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: gold, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
         ),
-        title: Row(
-          children: [
-            Image.asset('assets/images/luna.png', height: 30),
-            const SizedBox(width: 8),
-            const Text('Luna'),
-          ],
+        labelStyle: TextStyle(color: gold),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          foregroundColor: darkGrey,
+          backgroundColor: gold,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          shadowColor: gold.withOpacity(0.3),
+          elevation: 10,
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Image + spinner overlay
-            Expanded(
-              child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: Column(
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Image.network(
-                          imageUrl,
-                          height: 300,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, st) => Container(
-                            height: 300,
-                            color: Colors.grey,
-                            child:
-                                const Center(child: Text('Loading Image…')),
-                          ),
-                        ).animate(controller: _confettiController).shake(),
-                        if (_isLoading)
-                          Container(
-                            height: 300,
-                            color: Colors.black38,
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _controller,
-                      onSubmitted: checkAnswer,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'What is this?',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: checkAnswer,
-                      child: const Text('Submit'),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      feedback,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _loadRandomImage,
-                      child: const Text('Next Image'),
+    );
+
+    return Theme(
+      data: theme,
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          backgroundColor: darkGrey,
+          elevation: 8,
+          shadowColor: Colors.black,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back,
+              color: gold,
+              shadows: [
+                Shadow(
+                  color: Colors.black54,
+                  offset: Offset(1, 1),
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Row(
+            children: [
+              Image.asset('assets/images/luna.png', height: 30),
+              const SizedBox(width: 8),
+              Text(
+                'Luna',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: gold,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black45,
+                      offset: Offset(1, 1),
+                      blurRadius: 3,
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: gold, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.5),
+                              blurRadius: 10,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Image.network(
+                                    imageUrl,
+                                    height: 300,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (ctx, err, st) => Container(
+                                          height: 300,
+                                          color: Colors.grey,
+                                          child: const Center(
+                                            child: Text('Loading Image…'),
+                                          ),
+                                        ),
+                                  )
+                                  .animate(controller: _confettiController)
+                                  .shake(),
+                              if (_isLoading)
+                                Container(
+                                  height: 300,
+                                  color: Colors.black38,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      color: gold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: _controller,
+                        onSubmitted: checkAnswer,
+                        style: TextStyle(color: creamyWhite),
+                        decoration: const InputDecoration(
+                          labelText: 'What is this?',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: checkAnswer,
+                        child: const Text('Submit'),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        feedback,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFFFFF8E7),
+                          shadows: [
+                            Shadow(
+                              color: Colors.black54,
+                              blurRadius: 2,
+                              offset: Offset(1, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _loadRandomImage,
+                        child: const Text('Next Image'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

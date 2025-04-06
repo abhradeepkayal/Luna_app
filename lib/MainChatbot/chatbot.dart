@@ -1,10 +1,44 @@
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
+
+final RouteObserver<PageRoute<dynamic>> routeObserver =
+    RouteObserver<PageRoute<dynamic>>();
+
+class GeminiAPI {
+  static Future<String> getResponse(
+    String message,
+    String botType,
+    FirebaseVertexAI vertexAI,
+  ) async {
+    try {
+      String personality;
+      if (botType == 'Chill Guy') {
+        personality = "calm, positive, solution-oriented, 'good bro' vibe";
+      } else if (botType == 'Emma') {
+        personality = "funny, charming, joyful, kind";
+      } else {
+        personality = "wise, serious, motivational, big-picture";
+      }
+      final prompt =
+          "You are a $botType AI assistant with a $personality personality. Respond appropriately.\nUser: $message";
+      final model = vertexAI.generativeModel(
+        model: 'models/gemini-2.0-flash-lite-001',
+      );
+      final response = await model.generateContent([Content.text(prompt)]);
+      return response.text ?? "No reply received.";
+    } catch (e) {
+      debugPrint("Error calling Vertex AI: $e");
+      return "Something went wrong while talking to Gemini.";
+    }
+  }
+}
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -13,17 +47,20 @@ class ChatbotScreen extends StatefulWidget {
   State<ChatbotScreen> createState() => _ChatbotScreenState();
 }
 
-class _ChatbotScreenState extends State<ChatbotScreen> {
+class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
   final TextEditingController _controller = TextEditingController();
-  final List<ChatMessage> _messages = [];
   final FlutterTts _flutterTts = FlutterTts();
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseVertexAI _vertexAI = FirebaseVertexAI.instanceFor(
+    auth: FirebaseAuth.instance,
+  );
 
   String _botType = 'Chill Guy';
   bool _isListening = false;
   bool _showBotList = false;
   bool _isImageLoading = false;
+  bool _isSending = false;
   String? _imagePath;
 
   final List<Map<String, String>> _bots = [
@@ -32,121 +69,135 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     {'name': 'Patrick', 'description': 'Wise, deep, smart, motivational'},
   ];
 
+  final Map<String, String> _welcomeMessages = {
+    'Chill Guy':
+        "Hey there! I’m Chill Guy, cool, calm, and ready to help you. What’s up?",
+    'Emma':
+        "Hi! I’m Emma, your joyful and sweet assistant. How can I bring some fun today?",
+    'Patrick':
+        "Hello, I’m Patrick. I’m here to guide you with deep, insightful responses. Let’s dive into things!",
+  };
+
   @override
   void initState() {
     super.initState();
-    _loadMessages();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showWelcomeMessage();
-    });
+    // Check Firestore to see if there are any existing messages.
+    _checkAndShowWelcomeMessage();
   }
 
-  void _showWelcomeMessage() {
-    final welcomeMessages = {
-      'Chill Guy':
-          "Hey there! I’m Chill Guy, cool, calm, and ready to help you. What’s up?",
-      'Emma':
-          "Hi! I’m Emma, your joyful and sweet assistant. How can I bring some fun today?",
-      'Patrick':
-          "Hello, I’m Patrick. I’m here to guide you with deep, insightful responses. Let’s dive into things!",
-    };
-    _addBotMessage(welcomeMessages[_botType]!);
-  }
-
-  void _sendMessage() async {
-    if (_controller.text.isEmpty && _imagePath == null) return;
-
-    final userMessage = _controller.text;
-
-    if (_imagePath != null) {
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            text: '[Image]',
-            sender: 'user',
-            imageFile: File(_imagePath!),
-            onReadAloud: () => _readAloud("You sent an image."),
-          ),
-        );
-      });
-      await _saveMessageToFirestore('Image: $_imagePath', 'user');
-      _imagePath = null;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      routeObserver.subscribe(this, modalRoute);
     }
-
-    if (userMessage.isNotEmpty) {
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            text: userMessage,
-            sender: 'user',
-            onReadAloud: () => _readAloud(userMessage),
-          ),
-        );
-        _controller.clear();
-      });
-      await _saveMessageToFirestore(userMessage, 'user');
-      _getBotResponse(userMessage);
-    }
-
-    setState(() {});
   }
 
-  Future<void> _getBotResponse(String message) async {
-    String response = await GeminiAPI.getResponse(message, _botType);
-    _addBotMessage(response);
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    _controller.dispose();
+    super.dispose();
   }
 
-  void _addBotMessage(String text) {
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          text: text,
-          sender: _botType,
-          onReadAloud: () => _readAloud(text),
-        ),
-      );
-    });
-    _saveMessageToFirestore(text, 'bot');
+  // Called when returning to this screen.
+  @override
+  void didPopNext() {
+    // No manual loading needed when using StreamBuilder.
   }
 
-  Future<void> _saveMessageToFirestore(String text, String sender) async {
-    await _firestore
-        .collection('chats')
-        .doc('chatbot_$_botType')
-        .collection('messages')
-        .add({
-          'text': text,
-          'sender': sender,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-  }
-
-  Future<void> _loadMessages() async {
+  /// Check if Firestore has any messages for the current user and bot.
+  /// If not, add a welcome message.
+  Future<void> _checkAndShowWelcomeMessage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final uid = user.uid;
     final snapshot =
         await _firestore
             .collection('chats')
-            .doc('chatbot_$_botType')
-            .collection('messages')
-            .orderBy('timestamp')
+            .where('uid', isEqualTo: uid)
+            .where('botType', isEqualTo: _botType)
             .get();
 
-    setState(() {
-      _messages.clear();
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final sender = data['sender'];
-        final text = data['text'];
-        _messages.add(
-          ChatMessage(
-            text: text,
-            sender: sender == 'bot' ? _botType : 'user',
-            onReadAloud: () => _readAloud(text),
-          ),
-        );
-      }
-    });
+    if (snapshot.docs.isEmpty) {
+      // Add the welcome message to Firestore.
+      final welcomeText = _welcomeMessages[_botType]!;
+      await _saveMessageToFirestore(welcomeText, 'bot', uid);
+    }
   }
 
+  /// Send message from the user and then get the bot response.
+  Future<void> _sendMessage() async {
+    if ((_controller.text.isEmpty && _imagePath == null) || _isSending) return;
+    setState(() => _isSending = true);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final uid = user.uid;
+
+    // If an image is selected, save that first.
+    if (_imagePath != null) {
+      await _firestore
+          .collection('chats')
+          .add({
+            'text': '', // No text if it's an image message.
+            'sender': 'user',
+            'botType': _botType,
+            'uid': uid,
+            'timestamp': FieldValue.serverTimestamp(),
+            'imagePath': _imagePath,
+          })
+          .then((docRef) {
+            debugPrint('Image message saved with id: ${docRef.id}');
+          });
+      setState(() {
+        _imagePath = null;
+      });
+    }
+
+    // Handle user text message.
+    final userText = _controller.text.trim();
+    if (userText.isNotEmpty) {
+      await _saveMessageToFirestore(userText, 'user', uid);
+      _controller.clear();
+      // Get and save bot response.
+      await _getBotResponse(userText, uid);
+    }
+    setState(() => _isSending = false);
+  }
+
+  /// Call Gemini API for a response and save it.
+  Future<void> _getBotResponse(String message, String uid) async {
+    final response = await GeminiAPI.getResponse(message, _botType, _vertexAI);
+    await _saveMessageToFirestore(response, 'bot', uid);
+  }
+
+  /// Save a message to Firestore in the "chats" collection.
+  Future<void> _saveMessageToFirestore(
+    String text,
+    String sender,
+    String uid,
+  ) async {
+    try {
+      await _firestore
+          .collection('chats')
+          .add({
+            'text': text,
+            'sender': sender,
+            'botType': _botType,
+            'uid': uid,
+            'timestamp': FieldValue.serverTimestamp(),
+          })
+          .then((docRef) {
+            debugPrint('Message saved with id: ${docRef.id}');
+          });
+    } catch (e, s) {
+      debugPrint('Error saving message: $e');
+      debugPrint('Stack trace: $s');
+    }
+  }
+
+  /// Start speech-to-text listening.
   void _startListening() async {
     if (await _speech.initialize()) {
       setState(() => _isListening = true);
@@ -160,47 +211,59 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }
   }
 
+  /// Stop speech-to-text listening.
   void _stopListening() {
     setState(() => _isListening = false);
     _speech.stop();
   }
 
+  /// Use text-to-speech to read aloud a message.
   void _readAloud(String text) async {
     await _flutterTts.speak(text);
   }
 
+  /// Pick an image from the gallery.
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     setState(() => _isImageLoading = true);
-
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _imagePath = pickedFile.path;
       });
     }
-
     setState(() => _isImageLoading = false);
   }
 
+  /// Switch between bot types.
   void _switchBotType(String type) {
     setState(() {
       _botType = type;
-      _messages.clear();
       _imagePath = null;
     });
-    _loadMessages();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showWelcomeMessage();
-    });
+    // Check if a welcome message is needed for the new bot type.
+    _checkAndShowWelcomeMessage();
   }
 
-  void _toggleBotList() {
-    setState(() => _showBotList = !_showBotList);
-  }
+  void _toggleBotList() => setState(() => _showBotList = !_showBotList);
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Scaffold(body: Center(child: Text("User not signed in.")));
+    }
+    final uid = user.uid;
+
+    // Use StreamBuilder to automatically load and update messages from Firestore.
+    final messagesStream =
+        _firestore
+            .collection('chats')
+            .where('uid', isEqualTo: uid)
+            .where('botType', isEqualTo: _botType)
+            .orderBy('timestamp')
+            .snapshots();
+
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
@@ -253,12 +316,56 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
             ),
           Expanded(
-            child: ListView.builder(
-              itemCount: _messages.length,
-              itemBuilder: (context, index) => _messages[index],
+            child: StreamBuilder<QuerySnapshot>(
+              stream: messagesStream,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  debugPrint("Stream error: ${snapshot.error}");
+                  return Center(
+                    child: Text(
+                      "Error loading messages:\n${snapshot.error}",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final docs = snapshot.data!.docs;
+                if (docs.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "No messages yet.",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final data = docs[index].data() as Map<String, dynamic>;
+                    // Build ChatMessage widget from Firestore data.
+                    return ChatMessage(
+                      text: data['text'] ?? '',
+                      sender: data['sender'] == 'bot' ? _botType : 'user',
+                      imageFile:
+                          data['imagePath'] != null
+                              ? File(data['imagePath'])
+                              : null,
+                      onReadAloud: () => _readAloud(data['text'] ?? ''),
+                    );
+                  },
+                );
+              },
             ),
           ),
-          if (_isImageLoading) const CircularProgressIndicator(),
+          if (_isImageLoading)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
           if (_imagePath != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -275,11 +382,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     right: 0,
                     child: IconButton(
                       icon: const Icon(Icons.cancel, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _imagePath = null;
-                        });
-                      },
+                      onPressed: () => setState(() => _imagePath = null),
                     ),
                   ),
                 ],
@@ -291,7 +394,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: () => setState(() => _messages.clear()),
+                  onPressed: () {
+                    // Since messages are loaded via StreamBuilder, manual clearing is not needed.
+                    debugPrint('Refresh pressed.');
+                  },
                 ),
                 IconButton(
                   icon: Icon(_isListening ? Icons.mic_off : Icons.mic),
@@ -307,6 +413,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     decoration: const InputDecoration(
                       hintText: 'Type a message',
                     ),
+                    enabled: !_isSending,
                   ),
                 ),
                 IconButton(
@@ -322,6 +429,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 }
 
+/// ChatMessage widget displays a single message bubble.
 class ChatMessage extends StatelessWidget {
   final String text;
   final String sender;
@@ -339,7 +447,6 @@ class ChatMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color backgroundColor;
-
     if (sender == 'user') {
       backgroundColor = Colors.grey[800]!;
     } else if (sender == 'Chill Guy') {
@@ -379,12 +486,7 @@ class ChatMessage extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
                 if (text.isNotEmpty)
-                  Text(
-                    text,
-                    style: const TextStyle(
-                      color: Color(0xFFFFFDD0),
-                    ), // creamy white
-                  ),
+                  Text(text, style: const TextStyle(color: Color(0xFFFFFDD0))),
               ],
             ),
           ),
@@ -395,27 +497,12 @@ class ChatMessage extends StatelessWidget {
   }
 }
 
-class GeminiAPI {
-  static Future<String> getResponse(String message, String botType) async {
-    try {
-      String personality;
-      if (botType == 'Chill Guy') {
-        personality = "calm, positive, solution-oriented, 'good bro' vibe";
-      } else if (botType == 'Emma') {
-        personality = "funny, charming, joyful, kind";
-      } else {
-        personality = "wise, serious, motivational, big-picture";
-      }
-      final prompt =
-          "You are a $botType AI assistant with a $personality personality. Respond appropriately.\nUser: $message";
-      final model = FirebaseVertexAI.instance.generativeModel(
-        model: 'models/gemini-2.0-flash-001',
-      );
-      final response = await model.generateContent([Content.text(prompt)]);
-      return response.text ?? "No reply received.";
-    } catch (e) {
-      debugPrint("Error calling Vertex AI: $e");
-      return "Something went wrong while talking to Gemini.";
-    }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  // Sign in anonymously if needed.
+  if (FirebaseAuth.instance.currentUser == null) {
+    await FirebaseAuth.instance.signInAnonymously();
   }
+  runApp(const MaterialApp(home: ChatbotScreen()));
 }

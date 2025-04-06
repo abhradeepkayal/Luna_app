@@ -5,6 +5,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:video_player/video_player.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:firebase_vertexai/firebase_vertexai.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ScenarioScreen extends StatelessWidget {
   final List<Map<String, dynamic>> scenarios = [
@@ -19,97 +20,209 @@ class ScenarioScreen extends StatelessWidget {
       'videoUrl':
           'https://firebasestorage.googleapis.com/v0/b/neuroapp-5d6c2.firebasestorage.app/o/InShot_20250326_015641128.mp4?alt=media&token=2f5160d5-e2cf-46b5-990e-6691a46321ca',
       'image': 'assets/images/doctor.png',
-    }
+    },
   ];
 
   ScenarioScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Get screen dimensions for responsive image sizing.
     final screenSize = MediaQuery.of(context).size;
-
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: Colors.black,
+        elevation: 4,
         title: Row(
           children: [
             Image.asset('assets/images/luna.png', height: 32),
             const SizedBox(width: 10),
-            const Text('Speech Therapy',
-                style: TextStyle(color: Colors.white)),
+            const Text(
+              'Scenario Game',
+              style: TextStyle(
+                fontFamily: 'AtkinsonHyperlegible',
+                fontSize: 24,
+                color: Color(0xFFF5F5DC),
+                fontWeight: FontWeight.bold,
+                shadows: [Shadow(color: Color(0xFFFFBF00), blurRadius: 4)],
+              ),
+            ),
           ],
         ),
       ),
-      body: GridView.count(
-        crossAxisCount: 2,
-        padding: const EdgeInsets.all(16),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        children: scenarios.map((scenario) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => VideoScreen(
-                    videoUrl: scenario['videoUrl'],
-                    scenarioTitle: scenario['title'],
-                  ),
-                ),
-              );
-            },
-            child: Card(
-              color: const Color(0xFF1E1E1E),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    // Image with responsive width and padding.
-                    Expanded(
-                      child: Image.asset(
-                        scenario['image'],
-                        fit: BoxFit.cover,
-                        width: screenSize.width * 0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      scenario['title'],
-                      style: const TextStyle(
-                        fontSize: 20,
-                        color: Colors.white,
-                        fontFamily: 'OpenDyslexic',
-                      ),
-                    ),
-                  ],
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF121212),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.black26),
+              child: Text(
+                'Luna Menu',
+                style: TextStyle(
+                  fontFamily: 'AtkinsonHyperlegible',
+                  fontSize: 24,
+                  color: Color(0xFFF5F5DC),
                 ),
               ),
             ),
-          );
-        }).toList(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Color(0xFFF5F5DC)),
+              title: const Text(
+                'Sign Out',
+                style: TextStyle(
+                  fontFamily: 'AtkinsonHyperlegible',
+                  color: Color(0xFFF5F5DC),
+                ),
+              ),
+              onTap: () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+            ),
+          ],
+        ),
       ),
-      bottomNavigationBar: _bottomNavBar(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children:
+              scenarios.map((scenario) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (_) => VideoScreen(
+                              videoUrl: scenario['videoUrl'],
+                              scenarioTitle: scenario['title'],
+                            ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    height: screenSize.height * 0.45,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFFFBF00),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFFBF00).withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(3, 6),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(scenario['image'], fit: BoxFit.cover),
+                          Container(
+                            alignment: Alignment.bottomCenter,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.7),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              scenario['title'],
+                              style: const TextStyle(
+                                fontFamily: 'OpenDyslexic',
+                                fontSize: 24,
+                                color: Color(0xFFF5F5DC),
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0xFFFFBF00),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+        ),
+      ),
+      //bottomNavigationBar: _buildDynamicBottomNavBar(context),
     );
   }
 
-  BottomNavigationBar _bottomNavBar() {
-    return BottomNavigationBar(
-      backgroundColor: const Color(0xFF121212),
-      selectedItemColor: const Color(0xFFF5F5DC),
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      currentIndex: 0,
-      onTap: (index) {},
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Forum'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-        BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chatbot'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
-    );
-  }
+  // Widget _buildDynamicBottomNavBar(BuildContext context) {
+  //   return BottomNavigationBar(
+  //     backgroundColor: const Color(0xFF121212),
+  //     selectedItemColor: const Color(0xFFFFBF00),
+  //     unselectedItemColor: Colors.grey,
+  //     type: BottomNavigationBarType.fixed,
+  //     currentIndex: 0,
+  //     onTap: (index) {
+  //       switch (index) {
+  //         case 0:
+  //           Navigator.pushNamedAndRemoveUntil(
+  //             context,
+  //             '/home',
+  //             (route) => false,
+  //           );
+  //           break;
+  //         case 1:
+  //           Navigator.pushNamed(context, '/forum');
+  //           break;
+  //         case 2:
+  //           Navigator.pushNamed(context, '/search');
+  //           break;
+  //         case 3:
+  //           Navigator.pushNamed(context, '/chatbot');
+  //           break;
+  //         case 4:
+  //           Navigator.pushNamed(context, '/profile');
+  //           break;
+  //       }
+  //     },
+  //     elevation: 10,
+  //     selectedLabelStyle: const TextStyle(fontFamily: 'AtkinsonHyperlegible'),
+  //     items: [
+  //       _buildNavItem(Icons.home, 'Home'),
+  //       _buildNavItem(Icons.people_outline, 'Forum'),
+  //       _buildNavItem(Icons.search, 'Search'),
+  //       _buildNavItem(Icons.chat_bubble_outline, 'Chatbot'),
+  //       _buildNavItem(Icons.person_outline, 'Profile'),
+  //     ],
+  //   );
+  // }
+
+  // BottomNavigationBarItem _buildNavItem(IconData iconData, String label) {
+  //   return BottomNavigationBarItem(
+  //     icon: Container(
+  //       padding: const EdgeInsets.all(4),
+  //       decoration: BoxDecoration(
+  //         border: Border.all(color: const Color(0xFFFFBF00), width: 1),
+  //         borderRadius: BorderRadius.circular(8),
+  //       ),
+  //       child: Icon(iconData),
+  //     ),
+  //     label: label,
+  //   );
+  // }
 }
 
 class VideoScreen extends StatefulWidget {
@@ -141,9 +254,7 @@ class _VideoScreenState extends State<VideoScreen> {
   String _overallReview = "";
   int _currentPrompt = 0;
 
-  // Store the AI feedback for each prompt.
   final List<String> _feedbacks = [];
-  
   List<Map<String, dynamic>> _prompts = [];
 
   final Map<String, List<Map<String, dynamic>>> scenarioPrompts = {
@@ -151,42 +262,41 @@ class _VideoScreenState extends State<VideoScreen> {
       {
         "time": 17,
         "context":
-            "The user is at a burger joint, speaking to a friendly cashier. They are expected to place an order politely, like 'I’d like a cheeseburger, please.' Analyze tone, pronunciation, and word choice."
+            "The user is at a burger joint, speaking politely to place an order.",
       },
       {
         "time": 24,
         "context":
-            "The cashier offers fries after taking the main order. The user should respond clearly, either accepting or declining."
+            "The cashier offers fries after taking the main order. The user should respond clearly.",
       },
       {
         "time": 33,
         "context":
-            "The user is expected to say how they will pay. A complete sentence like 'I will pay by card' or 'Cash, please' is ideal."
+            "The user is expected to say how they will pay, e.g. 'I will pay by card'.",
       },
     ],
     'Doctor': [
       {
         "time": 18,
         "context":
-            "The user is visiting a doctor. They should explain what they are feeling, using a complete sentence like 'I have been feeling unwell for a few days.'"
+            "The user is at a doctor's office, explaining their symptoms.",
       },
       {
         "time": 23,
         "context":
-            "The doctor asks for more details. The user is expected to say where it hurts and how it feels."
+            "The doctor asks for more details. The user should explain where it hurts and how it feels.",
       },
       {
         "time": 33,
         "context":
-            "The doctor asks how long the issue has lasted and if the pain moves. The user should give a clear timeline and additional symptoms if possible."
+            "The doctor inquires about the duration and pattern of the pain.",
       },
-    ]
+    ],
   };
 
   @override
   void initState() {
     super.initState();
-    // Force landscape mode initially for video playback.
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -194,15 +304,6 @@ class _VideoScreenState extends State<VideoScreen> {
 
     _speech = stt.SpeechToText();
     _tts = FlutterTts();
-
-    // Set an alternative voice if available.
-    _tts.getVoices.then((voices) {
-      if (voices != null && voices.isNotEmpty) {
-        // Choose the second voice if available; otherwise, use the first.
-        var selectedVoice = voices.length > 1 ? voices[1] : voices[0];
-        _tts.setVoice(selectedVoice);
-      }
-    });
 
     _prompts = scenarioPrompts[widget.scenarioTitle] ?? [];
 
@@ -228,7 +329,6 @@ class _VideoScreenState extends State<VideoScreen> {
         timer.cancel();
         return;
       }
-
       final pauseTime = _prompts[_currentPrompt]['time'];
       if (_controller.value.position.inSeconds >= pauseTime &&
           !_isPaused &&
@@ -252,19 +352,20 @@ class _VideoScreenState extends State<VideoScreen> {
       setState(() {
         _isListening = true;
       });
-      _speech.listen(onResult: (val) async {
-        if (val.finalResult) {
-          _speech.stop();
-          await _analyzeSpeech(val.recognizedWords);
-          setState(() {
-            _isListening = false;
-          });
-        }
-      });
+      _speech.listen(
+        onResult: (val) async {
+          if (val.finalResult) {
+            _speech.stop();
+            await _analyzeSpeech(val.recognizedWords);
+            setState(() {
+              _isListening = false;
+            });
+          }
+        },
+      );
     }
   }
 
-  // Helper function that speaks and waits for completion.
   Future<void> _speakAndWait(String text) async {
     final completer = Completer();
     _tts.setCompletionHandler(() {
@@ -276,21 +377,15 @@ class _VideoScreenState extends State<VideoScreen> {
 
   Future<void> _analyzeSpeech(String userSpeech) async {
     final contextText = _prompts[_currentPrompt]['context'];
-    // Build the prompt using all previous feedback.
-    String previousFeedback = _feedbacks.isNotEmpty ? _feedbacks.join("\n") : "";
+    String previousFeedback =
+        _feedbacks.isNotEmpty ? _feedbacks.join("\n") : "";
     String prompt = '''
 User said: "$userSpeech"
 Context: "$contextText"
 Previous Feedback:
 $previousFeedback
 
-Generate a EXACTLY one-liner upbeat response tailored to the user's speech style:
--If they sound nervous or hesitant or give a slighlt wrong answer with respect to the context, offer playful encouragement.
--If they speak smoothly and confidently, match their energy with enthusiastic praise.
--If they crack a joke or get sarcastic, respond with a witty, fun comeback.
--If they say something inappropriate, only then rebuke them and tell hem that it is not acceptable. Tell them to use this
-feature seriously. (Give two short sentences response in this case).
-Keep it light, friendly, and hype them up—like a fun coach, never robotic or formal. One-liners only!
+Generate a one-liner upbeat response tailored to the user's speech style.
 ''';
 
     setState(() {
@@ -302,23 +397,16 @@ Keep it light, friendly, and hype them up—like a fun coach, never robotic or f
       final model = FirebaseVertexAI.instance.generativeModel(
         model: 'models/gemini-2.0-flash-001',
       );
-
       final response = await model.generateContent([Content.text(prompt)]);
       String complimentMessage =
           response.text ?? "Excellent work. Keep shining!";
-      
-      // Save this feedback for use in future prompts.
       _feedbacks.add(complimentMessage);
-
       setState(() {
         _compliment = complimentMessage;
         _isProcessing = false;
       });
-
-      // Wait for TTS to finish, then wait 2 extra seconds.
       await _speakAndWait(_compliment);
       await Future.delayed(const Duration(seconds: 2));
-
       _controller.play();
       setState(() {
         _isPaused = false;
@@ -333,32 +421,25 @@ Keep it light, friendly, and hype them up—like a fun coach, never robotic or f
     }
   }
 
-  // Generate the overall review using the accumulated feedback.
   Future<void> _generateOverallReview() async {
-    String prompt = 'Based on the following feedback responses from your speaking performance:\n';
+    String prompt = 'Based on the feedback:\n';
     for (int i = 0; i < _feedbacks.length; i++) {
       prompt += 'Feedback ${i + 1}: "${_feedbacks[i]}"\n';
     }
-    prompt += '''
-Please provide an overall review in EXACTLY 2-4 sentences that is guiding, fun, and helpful.
-Highlight the user's strengths and offer constructive suggestions for improvement—focusing on tone,
-clarity, stuttering, pronunciation, pacing, context, and/or situational awareness.
-Base your review on real-world usage and avoid any academic or bookish commentary.
-''';
+    prompt += 'Provide an overall review in 2-4 sentences.';
 
     try {
       final model = FirebaseVertexAI.instance.generativeModel(
         model: 'models/gemini-2.0-flash-001',
       );
-
       final response = await model.generateContent([Content.text(prompt)]);
-      String review = response.text ??
+      String review =
+          response.text ??
           "Overall, focus on clearer articulation and consistent pacing.";
       setState(() {
         _overallReview = review;
       });
       await _speakAndWait(_overallReview);
-      // After speaking the final review, leave it on screen.
     } catch (e) {
       setState(() {
         _overallReview =
@@ -370,7 +451,6 @@ Base your review on real-world usage and avoid any academic or bookish commentar
 
   @override
   void dispose() {
-    // Restore orientation settings when leaving this screen.
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     _controller.dispose();
     _speech.stop();
@@ -379,25 +459,22 @@ Base your review on real-world usage and avoid any academic or bookish commentar
 
   @override
   Widget build(BuildContext context) {
-    // Retrieve dynamic sizes using MediaQuery.
     final mediaWidth = MediaQuery.of(context).size.width;
     final mediaHeight = MediaQuery.of(context).size.height;
-    final tapButtonBottomPadding = mediaHeight * 0.05; // 5% of screen height
+    final tapButtonBottomPadding = mediaHeight * 0.05;
 
-    // If the video ended, switch to portrait mode and show final overview in a 
-    // vertical layout with the video at the top (paused) and the AI remark below.
     if (_videoEnded && _overallReview.isNotEmpty) {
-      // Force portrait mode now that the video is finished.
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
       return Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(
           child: Column(
             children: [
-              // Back button at top left using relative padding.
               Padding(
-                padding: EdgeInsets.only(left: mediaWidth * 0.03, top: mediaHeight * 0.02),
+                padding: EdgeInsets.only(
+                  left: mediaWidth * 0.03,
+                  top: mediaHeight * 0.02,
+                ),
                 child: Align(
                   alignment: Alignment.topLeft,
                   child: IconButton(
@@ -406,7 +483,6 @@ Base your review on real-world usage and avoid any academic or bookish commentar
                   ),
                 ),
               ),
-              // Show the final paused frame at the top.
               if (_controller.value.isInitialized)
                 AspectRatio(
                   aspectRatio: _controller.value.aspectRatio,
@@ -417,8 +493,6 @@ Base your review on real-world usage and avoid any academic or bookish commentar
                   height: mediaHeight * 0.25,
                   child: const Center(child: CircularProgressIndicator()),
                 ),
-              
-              // The AI remark in a scrollable area.
               Expanded(
                 child: SingleChildScrollView(
                   child: Container(
@@ -448,23 +522,25 @@ Base your review on real-world usage and avoid any academic or bookish commentar
       );
     }
 
-    // Otherwise, show the video in landscape mode with our usual overlays.
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
           Center(
-            child: _controller.value.isInitialized
-                ? AspectRatio(
-                    aspectRatio: _controller.value.aspectRatio,
-                    child: VideoPlayer(_controller),
-                  )
-                : const CircularProgressIndicator(),
+            child:
+                _controller.value.isInitialized
+                    ? AspectRatio(
+                      aspectRatio: _controller.value.aspectRatio,
+                      child: VideoPlayer(_controller),
+                    )
+                    : const CircularProgressIndicator(),
           ),
-          // Back button at top left using SafeArea.
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.only(left: mediaWidth * 0.03, top: mediaHeight * 0.02),
+              padding: EdgeInsets.only(
+                left: mediaWidth * 0.03,
+                top: mediaHeight * 0.02,
+              ),
               child: Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
@@ -480,7 +556,6 @@ Base your review on real-world usage and avoid any academic or bookish commentar
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
               ),
             ),
-          // AI feedback overlay.
           if (_compliment.isNotEmpty)
             Center(
               child: Container(
@@ -502,7 +577,6 @@ Base your review on real-world usage and avoid any academic or bookish commentar
                 ),
               ),
             ),
-          // "Tap to Speak" floating-style button placed at the center bottom.
           if (_isPaused && _showMic && !_isProcessing)
             Positioned(
               bottom: tapButtonBottomPadding,
@@ -519,11 +593,10 @@ Base your review on real-world usage and avoid any academic or bookish commentar
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
-                        // Using withAlpha to convert 0.2 opacity to alpha value.
-                        color: Colors.black.withAlpha((0.2 * 255).toInt()),
+                        color: Colors.black.withOpacity(0.2),
                         offset: const Offset(0, 4),
                         blurRadius: 6,
-                      )
+                      ),
                     ],
                   ),
                   child: ElevatedButton.icon(

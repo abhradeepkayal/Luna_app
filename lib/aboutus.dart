@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // For handling URL links
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutUsPage extends StatelessWidget {
   const AboutUsPage({super.key});
@@ -7,32 +7,51 @@ class AboutUsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[900], // Greyish-black background
+      backgroundColor: const Color(0xFF1C1C1C),
       appBar: AppBar(
-  leading: IconButton(
-    icon: Icon(
-  Theme.of(context).platform == TargetPlatform.iOS
-      ? Icons.arrow_back_ios
-      : Icons.arrow_back,
-  color: Colors.white,
-),
-
-    onPressed: () {
-      Navigator.pop(context);
-    },
-  ),
-  title: Text(
-    'About Us',
-    style: TextStyle(
-      fontFamily: 'AtkinsonHyperlegible', // Heading font style
-      color: Colors.white,
-      fontSize: 30,
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-  backgroundColor: Colors.black,
-),
-
+        elevation: 8,
+        backgroundColor: const Color(0xFF1A1A1A),
+        shadowColor: Colors.black.withAlpha(150),
+        leading: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFFFBF00), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(77),
+                spreadRadius: 1,
+                blurRadius: 3,
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: Icon(
+              Theme.of(context).platform == TargetPlatform.iOS
+                  ? Icons.arrow_back_ios
+                  : Icons.arrow_back,
+              color: const Color(0xFFFFF8DC),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        title: Text(
+          'About Us',
+          style: TextStyle(
+            fontFamily: 'AtkinsonHyperlegible',
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFFFBF00),
+            shadows: [
+              Shadow(
+                color: Colors.black.withAlpha(200),
+                offset: Offset(1, 2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -41,37 +60,37 @@ class AboutUsPage extends StatelessWidget {
               'Aditya Shaw',
               'Frontend & Backend Developer',
               'Building seamless experiences, one line of code at a time.',
-              'Aditya Shaw is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Information Technology. Passionate about competitive coding and full-stack development, he is constantly refining his problem-solving skills. A pupil on Codeforces, Aditya is well-versed in C, C++, Dart, Flutter, and Firebase, crafting robust and scalable applications.',
-              'assets/aditya.jpg', // Placeholder for image
-              'adityawcode@gmail.com',
+              'Aditya Shaw is a first-year B.Tech student at IIESTS...',
+              'assets/images/aditya.jpg',
+              'mailto:adityawcode@gmail.com',
               'https://www.linkedin.com/in/aditya-shaw-809a7b323',
             ),
             _buildProfileCard(
               'Yash Agarwal',
               'Frontend & Backend Developer',
               'Turning ideas into interactive experiences!',
-              'Yash Agarwal is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Information Technology. Passionate about app development, Yash is committed to building intuitive and dynamic digital solutions. With expertise in C, C++, Python, HTML, CSS, Dart, Flutter, and Firebase, he crafts seamless user experiences and scalable applications.',
-              'assets/yash.jpg',
-              'yashagarwal7088@gmail.com',
+              'Yash Agarwal is a first-year B.Tech student at IIESTS...',
+              'assets/images/yash.jpg',
+              'mailto:yashagarwal7088@gmail.com',
               'https://www.linkedin.com/in/yash-agarwal-b95630308',
             ),
             _buildProfileCard(
               'Anik Chakraborty',
               'Design & Animation',
               'Bringing ideas to life with creativity and motion!',
-              'Anik Chakraborty is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Computer Science and Technology. With a keen eye for design and animation, Anik specializes in crafting smooth, aesthetically pleasing user experiences. He is a researcher of cool ideas for the app and is highly skilled in Canva and Flutter UI design, ensuring that every visual element tells a story.',
-              'assets/anik.jpg',
-              'anik.newme@gmail.com',
+              'Anik Chakraborty is a first-year B.Tech student at IIESTS...',
+              'assets/images/anik.jpg',
+              'mailto:anik.newme@gmail.com',
               'https://www.linkedin.com/in/anik-chakraborty-a2183b277',
             ),
             _buildProfileCard(
               'Abhradeep Kayal',
               'Frontend Developer',
               'Crafting meaningful experiences, one code at a time!',
-              'Abhradeep Kayal is a first-year B.Tech student at the Indian Institute of Engineering Science and Technology, Shibpur (IIESTS), pursuing Electrical Engineering. He has a strong interest in development and is passionate about creating intuitive and user-friendly interfaces. Abhradeep created Mindora, a mental health tracker website, showcasing his development skills. With expertise in C, Java, Python, HTML, CSS, JavaScript, MERN stack, Dart, and Flutter, he focuses on building efficient and well-designed applications.',
-              'assets/abhradeep.jpg',
-              'kayal.abhradeep04@gmail.com',
-              'https://www.linkedin.com/in/adk47/',
+              'Abhradeep Kayal is a first-year B.Tech student at IIESTS...',
+              'assets/images/abhradeep.jpg',
+              'mailto:kayal.abhradeep04@gmail.com',
+              'https://www.linkedin.com/in/adk47',
             ),
           ],
         ),
@@ -85,67 +104,81 @@ class AboutUsPage extends StatelessWidget {
     String tagline,
     String description,
     String imageUrl,
-    String email,
-    String linkedin,
+    String emailUrl,
+    String linkedinUrl,
   ) {
     return Card(
-      color: Colors.grey[850],
-      margin: EdgeInsets.symmetric(vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: const Color(0xFF2A2A2A),
+      elevation: 10,
+      shadowColor: Colors.black.withAlpha(100),
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFFFFBF00), width: 1.2),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(18.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-              radius: 40,
-              backgroundImage: AssetImage(imageUrl), // Placeholder for image
+              radius: 45,
+              backgroundImage: AssetImage(imageUrl),
+              backgroundColor: Colors.black,
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     name,
-                    style: TextStyle(
-                      fontFamily: 'AtkinsonHyperlegible', // Heading font style
-                      color: Colors.white,
+                    style: const TextStyle(
+                      fontFamily: 'AtkinsonHyperlegible',
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xFFFFF8DC),
+                      shadows: [
+                        Shadow(
+                          color: Colors.black,
+                          offset: Offset(1, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
                   Text(
                     role,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'AtkinsonHyperlegible',
-                      color: Colors.white70,
                       fontSize: 18,
+                      color: Colors.white70,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     tagline,
-                    style: TextStyle(
-                      fontFamily: 'OpenDyslexic', // Body text font style
-                      color: Colors.white70,
+                    style: const TextStyle(
+                      fontFamily: 'OpenDyslexic',
                       fontSize: 16,
+                      color: Colors.white70,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     description,
-                    style: TextStyle(
-                      fontFamily: 'OpenDyslexic', // Body text font style
-                      color: Colors.white70,
+                    style: const TextStyle(
+                      fontFamily: 'OpenDyslexic',
                       fontSize: 14,
+                      color: Colors.white70,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
-                      _buildLinkButton(email, 'Email'),
-                      SizedBox(width: 16),
-                      _buildLinkButton(linkedin, 'LinkedIn'),
+                      _buildLinkButton(emailUrl, 'Email'),
+                      const SizedBox(width: 12),
+                      _buildLinkButton(linkedinUrl, 'LinkedIn'),
                     ],
                   ),
                 ],
@@ -161,15 +194,16 @@ class AboutUsPage extends StatelessWidget {
     return ElevatedButton(
       onPressed: () => _launchURL(url),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue, // Updated color property
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        backgroundColor: const Color(0xFFFFBF00),
+        foregroundColor: Colors.black,
+        elevation: 4,
+        shadowColor: Colors.black,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: 'OpenDyslexic', // Body text font style
-          fontSize: 14,
-        ),
+        style: const TextStyle(fontFamily: 'OpenDyslexic', fontSize: 14),
       ),
     );
   }
@@ -177,13 +211,8 @@ class AboutUsPage extends StatelessWidget {
   Future<void> _launchURL(String urlString) async {
     final Uri uri = Uri.parse(urlString);
 
-    // new canLaunchUrl
-    if (!await canLaunchUrl(uri)) {
-      throw 'Could not launch $uri';
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      debugPrint('Could not launch $urlString');
     }
-    await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
   }
 }

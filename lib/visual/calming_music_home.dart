@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'video_background.dart';
 import 'music_category_page.dart';
-//import '../visual/music_player_widget.dart';
-// import '../visuals/music_model.dart';
 import 'category_tile.dart';
 
 class CalmingMusicHome extends StatelessWidget {
@@ -21,18 +19,29 @@ class CalmingMusicHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Background video
+        // Background video remains intact.
         VideoBackground(videoPath: "assets/videos/main_bg.mp4"),
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
-            title: Text("Calming Visuals & Music",
-                style: TextStyle(
-                  fontFamily: 'AtkinsonHyperlegible',
-                  color: Colors.white,
-                )),
             backgroundColor: Colors.transparent,
-            elevation: 0,
+            elevation: 4,
+            title: Text(
+              "Calming Visuals & Music",
+              style: const TextStyle(
+                fontFamily: 'AtkinsonHyperlegible',
+                color: Color(0xFFFFBF00), // Golden accent for the title
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    offset: Offset(0, 2),
+                    blurRadius: 3,
+                    color: Colors.black45,
+                  ),
+                ],
+              ),
+            ),
           ),
           body: ListView.builder(
             itemCount: categories.length,
@@ -41,12 +50,16 @@ class CalmingMusicHome extends StatelessWidget {
               return CategoryTile(
                 title: cat["title"],
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => MusicCategoryPage(
-                      title: cat["title"],
-                      videoPath: cat["video"],
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (_) => MusicCategoryPage(
+                            title: cat["title"],
+                            videoPath: cat["video"],
+                          ),
                     ),
-                  ));
+                  );
                 },
               );
             },

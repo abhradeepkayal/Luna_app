@@ -7,7 +7,7 @@
 
 
     <application
-        android:label="neuro_app"
+        android:label="Luna"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

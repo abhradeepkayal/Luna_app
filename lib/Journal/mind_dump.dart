@@ -1,16 +1,16 @@
-// mind_dump_page.dart
+// lib/pages/mind_dump_page.dart
 
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MindDumpPage extends StatefulWidget {
-  const MindDumpPage({super.key});
+  const MindDumpPage({Key? key}) : super(key: key);
 
   @override
   State<MindDumpPage> createState() => _MindDumpPageState();
@@ -18,226 +18,690 @@ class MindDumpPage extends StatefulWidget {
 
 class _MindDumpPageState extends State<MindDumpPage> {
   final TextEditingController _controller = TextEditingController();
-  bool _showWriteSection = true;
   final FlutterTts _flutterTts = FlutterTts();
   late stt.SpeechToText _speech;
+  bool _showWriteSection = true;
   bool _isListening = false;
-  List<String> imagePaths = [];
+  bool _isSpeaking = false;
+  final List<String> _imagePaths = [];
+  String? _mindDumpDocId;
+
+  static const Color bgColor = Color(0xFF121212);
+  static const Color cardColor = Color(0xFF1E1E1E);
+  static const Color textColor = Color(0xFFFAF3E0);
+  static const Color accentColor = Color(0xFFFFBF00);
 
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
+    _initTtsHandlers();
     _loadLatestMindDump();
   }
 
-  void _toggleWriteSection() =>
-      setState(() => _showWriteSection = !_showWriteSection);
-
-  void _speakText() async => await _flutterTts.speak(_controller.text);
-
-  void _startListening() async {
-    if (!_isListening) {
-      bool available = await _speech.initialize();
-      if (available) {
-        setState(() => _isListening = true);
-        _speech.listen(
-          onResult: (val) {
-            setState(() {
-              _controller.text += ' ${val.recognizedWords}';
-              _autoSaveMindDump();
-            });
-          },
-        );
-      }
-    }
+  void _initTtsHandlers() {
+    _flutterTts
+      ..setStartHandler(() => setState(() => _isSpeaking = true))
+      ..setCompletionHandler(() => setState(() => _isSpeaking = false))
+      ..setErrorHandler((_) => setState(() => _isSpeaking = false));
   }
 
   Future<void> _loadLatestMindDump() async {
-    final snapshot =
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final snap =
         await FirebaseFirestore.instance
             .collection('mind_dumps')
+            .where('uid', isEqualTo: user.uid)
             .orderBy('timestamp', descending: true)
             .limit(1)
             .get();
-    if (snapshot.docs.isNotEmpty) {
-      final data = snapshot.docs.first.data();
-      _controller.text = data['content'] ?? '';
-      setState(() {});
-    }
-  }
-
-  void _insertImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      final path = picked.path;
-      imagePaths.add(path);
-      _controller.text += '\n\n![Image]($path)\n\n';
-      _autoSaveMindDump();
+    if (snap.docs.isNotEmpty) {
+      final doc = snap.docs.first;
+      _mindDumpDocId = doc.id;
+      _controller.text = doc.data()['content'] ?? '';
       setState(() {});
     }
   }
 
   Future<void> _autoSaveMindDump() async {
-    final content = _controller.text.trim();
-    if (content.isEmpty) return;
-    await FirebaseFirestore.instance.collection('mind_dumps').add({
-      'content': content,
-      'timestamp': Timestamp.now(),
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final content = _buildPreviewText();
+    if (content.trim().isEmpty) return;
+    final col = FirebaseFirestore.instance.collection('mind_dumps');
+    if (_mindDumpDocId != null) {
+      await col.doc(_mindDumpDocId).update({
+        'content': content,
+        'timestamp': Timestamp.now(),
+        'uid': user.uid,
+      });
+    } else {
+      final docRef = await col.add({
+        'content': content,
+        'timestamp': Timestamp.now(),
+        'uid': user.uid,
+      });
+      _mindDumpDocId = docRef.id;
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_isListening) {
+      if (await _speech.initialize()) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) {
+            _controller.text += ' ${val.recognizedWords}';
+            _autoSaveMindDump();
+            setState(() {});
+          },
+        );
+      }
+    } else {
+      await _speech.stop();
+      setState(() => _isListening = false);
+    }
+  }
+
+  Future<void> _toggleSpeak() async {
+    if (_isSpeaking) {
+      await _flutterTts.stop();
+      setState(() => _isSpeaking = false);
+    } else {
+      setState(() => _isSpeaking = true);
+      await _flutterTts.speak(_controller.text);
+    }
+  }
+
+  Future<void> _insertImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+    final path = picked.path;
+    final text = _controller.text;
+    final sel = _controller.selection;
+    final pos = sel.baseOffset >= 0 ? sel.baseOffset : text.length;
+    _controller.text = text.replaceRange(pos, pos, '📷');
+    _imagePaths.add('file://$path');
+    _controller.selection = TextSelection.collapsed(offset: pos + 1);
+    _autoSaveMindDump();
+    setState(() {});
+  }
+
+  String _buildPreviewText() {
+    int idx = 0;
+    return _controller.text.replaceAllMapped(RegExp('📷'), (m) {
+      final p = idx < _imagePaths.length ? _imagePaths[idx] : '';
+      idx++;
+      return '![📷]($p)';
     });
   }
 
-  Widget _buildMarkdownPreview() {
-    return MarkdownBody(
-      data: _controller.text.replaceAll('\n', '  \n'),
-      imageBuilder: (uri, title, alt) {
-        final file = File.fromUri(uri);
-        return Image.file(file);
-      },
-      styleSheet: MarkdownStyleSheet.fromTheme(
-        Theme.of(context),
-      ).copyWith(p: const TextStyle(color: Colors.white)),
+  void _onTextChanged(String _) {
+    _autoSaveMindDump();
+    setState(() {});
+  }
+
+  void _showEmojiPicker() {
+    FocusScope.of(context).unfocus();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder:
+          (_) => _EmojiPicker(
+            onEmojiSelected: (e) {
+              Navigator.pop(context);
+              _controller.text += e;
+              _autoSaveMindDump();
+              setState(() {});
+            },
+          ),
     );
+  }
+
+  Future<void> _clearAll() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            backgroundColor: cardColor,
+            title: const Text(
+              "Clear All",
+              style: TextStyle(
+                fontFamily: 'AtkinsonHyperlegible',
+                color: textColor,
+              ),
+            ),
+            content: const Text(
+              "Are you sure you want to clear everything?",
+              style: TextStyle(fontFamily: 'OpenDyslexic', color: textColor),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(color: accentColor),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  "Clear",
+                  style: TextStyle(color: accentColor),
+                ),
+              ),
+            ],
+          ),
+    );
+    if (ok == true) {
+      _controller.clear();
+      _imagePaths.clear();
+      setState(() {});
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("All content cleared")));
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoSaveMindDump();
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('Mind Dump'),
-        backgroundColor: Colors.black,
+        backgroundColor: bgColor,
+        elevation: 0,
+        title: Text(
+          'Mind Dump',
+          style: const TextStyle(
+            fontFamily: 'AtkinsonHyperlegible',
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: accentColor,
+            shadows: [
+              Shadow(
+                color: Colors.black54,
+                offset: Offset(1, 1),
+                blurRadius: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: Text(
+                MaterialLocalizations.of(
+                  context,
+                ).formatCompactDate(DateTime.now()),
+                style: const TextStyle(
+                  fontFamily: 'OpenDyslexic',
+                  fontSize: 14,
+                  color: textColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _clearAll,
+        backgroundColor: accentColor,
+        elevation: 6,
+        child: const Icon(Icons.delete, color: bgColor),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Write/Edit Header
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "📝 Write/Edit",
+                    '📝 Write/Edit',
                     style: TextStyle(
-                      color: Colors.white,
+                      fontFamily: 'AtkinsonHyperlegible',
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      color: accentColor,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black54,
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      _showWriteSection ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.white,
-                    ),
-                    onPressed: _toggleWriteSection,
+                  _iconButton(
+                    icon:
+                        _showWriteSection
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                    onTap:
+                        () => setState(
+                          () => _showWriteSection = !_showWriteSection,
+                        ),
                   ),
                 ],
               ),
-
-              if (_showWriteSection)
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.format_bold,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {
-                                _controller.text += '*bold*';
-                                _autoSaveMindDump();
-                                setState(() {});
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.format_italic,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {
-                                _controller.text += '_italic';
-                                _autoSaveMindDump();
-                                setState(() {});
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.image,
-                                color: Colors.white,
-                              ),
-                              onPressed: _insertImage,
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.mic, color: Colors.white),
-                              onPressed: _startListening,
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.volume_up,
-                                color: Colors.white,
-                              ),
-                              onPressed: _speakText,
-                            ),
-                          ],
-                        ),
-                        EmojiPicker(
-                          onEmojiSelected: (cat, emoji) {
-                            _controller.text += emoji.emoji;
-                            _autoSaveMindDump();
-                            setState(() {});
-                          },
-                          config: const Config(
-                            emojiViewConfig: EmojiViewConfig(emojiSizeMax: 32),
-                            bottomActionBarConfig: BottomActionBarConfig(
-                              showBackspaceButton: true,
-                            ),
+              if (_showWriteSection) ...[
+                const SizedBox(height: 16),
+                // Toolbar
+                Container(
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accentColor, width: 1),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black45,
+                        offset: Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          _iconButton(
+                            icon: Icons.format_bold,
+                            onTap: () {
+                              _controller.text += '**bold**';
+                              _autoSaveMindDump();
+                              setState(() {});
+                            },
                           ),
-                        ),
-                        TextField(
-                          controller: _controller,
-                          onChanged: (val) {
-                            _autoSaveMindDump();
-                            setState(() {});
-                          },
-                          maxLines: null,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                            hintText: 'Dump your thoughts...',
-                            hintStyle: TextStyle(color: Colors.white54),
-                            border: OutlineInputBorder(),
-                            filled: true,
-                            fillColor: Colors.black54,
+                          _iconButton(
+                            icon: Icons.format_italic,
+                            onTap: () {
+                              _controller.text += '_italic_';
+                              _autoSaveMindDump();
+                              setState(() {});
+                            },
                           ),
+                          _iconButton(icon: Icons.image, onTap: _insertImage),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          _iconButton(
+                            icon: Icons.mic,
+                            iconColor:
+                                _isListening ? Colors.redAccent : textColor,
+                            onTap: _toggleListening,
+                          ),
+                          _iconButton(
+                            icon: Icons.volume_up,
+                            iconColor: _isSpeaking ? Colors.green : textColor,
+                            onTap: _toggleSpeak,
+                          ),
+                          _iconButton(
+                            icon: Icons.emoji_emotions,
+                            onTap: _showEmojiPicker,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Text Field
+                Container(
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accentColor, width: 1),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black45,
+                        offset: Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: TextField(
+                    controller: _controller,
+                    onChanged: _onTextChanged,
+                    maxLines: null,
+                    style: const TextStyle(
+                      fontFamily: 'OpenDyslexic',
+                      color: textColor,
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Dump your thoughts...',
+                      hintStyle: TextStyle(color: Colors.white54),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 32),
+              // Preview Header
+              Container(
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: accentColor, width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 16,
+                ),
+                child: const Center(
+                  child: Text(
+                    '👀 Preview',
+                    style: TextStyle(
+                      fontFamily: 'AtkinsonHyperlegible',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: accentColor,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black54,
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
                         ),
                       ],
                     ),
                   ),
                 ),
-
-              const SizedBox(height: 20),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "👀 Preview",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: 18,
-                  ),
-                ),
               ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: SingleChildScrollView(child: _buildMarkdownPreview()),
+              const SizedBox(height: 16),
+              // Markdown Preview
+              Container(
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: accentColor, width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: MarkdownBody(
+                  data: _buildPreviewText().replaceAll('\n', '  \n'),
+                  styleSheet: MarkdownStyleSheet(
+                    p: const TextStyle(
+                      fontFamily: 'OpenDyslexic',
+                      color: textColor,
+                    ),
+                  ),
+                  selectable: false,
+                  imageBuilder: (uri, _, __) {
+                    final file = File(
+                      uri.toFilePath(windows: Platform.isWindows),
+                    );
+                    return Image.file(file);
+                  },
+                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _iconButton({
+    required IconData icon,
+    Color? iconColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: cardColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: accentColor, width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black45,
+              offset: Offset(1, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+        child: Icon(icon, color: iconColor ?? textColor, size: 20),
+      ),
+    );
+  }
+}
+
+class _EmojiPicker extends StatelessWidget {
+  final void Function(String) onEmojiSelected;
+  const _EmojiPicker({required this.onEmojiSelected, Key? key})
+    : super(key: key);
+
+  static const List<String> _emojis = [
+    '😀',
+    '😃',
+    '😄',
+    '😁',
+    '😆',
+    '😅',
+    '😂',
+    '🤣',
+    '😊',
+    '😇',
+    '🙂',
+    '🙃',
+    '😉',
+    '😌',
+    '😍',
+    '🥰',
+    '😘',
+    '😗',
+    '😙',
+    '😚',
+    '😋',
+    '😛',
+    '😝',
+    '😜',
+    '🤪',
+    '🤨',
+    '🧐',
+    '🤓',
+    '😎',
+    '🥳',
+    '😏',
+    '😒',
+    '😞',
+    '😔',
+    '😟',
+    '😕',
+    '🙁',
+    '☹',
+    '😣',
+    '😖',
+    '😫',
+    '😩',
+    '🥺',
+    '😢',
+    '😭',
+    '😤',
+    '😠',
+    '😡',
+    '🤬',
+    '🤯',
+    '😳',
+    '🥵',
+    '🥶',
+    '😱',
+    '😨',
+    '😰',
+    '😥',
+    '😓',
+    '🤗',
+    '🤔',
+    '🤭',
+    '🤫',
+    '🤥',
+    '😶',
+    '😐',
+    '😑',
+    '😬',
+    '🙄',
+    '😯',
+    '😦',
+    '😧',
+    '😮',
+    '😲',
+    '🥱',
+    '😴',
+    '🤤',
+    '😪',
+    '😵',
+    '🤐',
+    '🥴',
+    '🤢',
+    '🤮',
+    '🤧',
+    '😷',
+    '🤒',
+    '🤕',
+    '🤑',
+    '🤠',
+    '😈',
+    '👿',
+    '👹',
+    '👺',
+    '💀',
+    '👻',
+    '👽',
+    '🤖',
+    '❤',
+    '💔',
+    '💕',
+    '💖',
+    '💗',
+    '💓',
+    '💞',
+    '💟',
+    '❣',
+    '💤',
+    '💩',
+    '🔥',
+    '✨',
+    '🌟',
+    '⭐',
+    '🌈',
+    '☀',
+    '🌤',
+    '⛅',
+    '🌥',
+    '☁',
+    '🌦',
+    '🌧',
+    '⛈',
+    '🌩',
+    '🌨',
+    '❄',
+    '⚡',
+    '💧',
+    '🌊',
+    '🎉',
+    '🎊',
+    '🎈',
+    '🎂',
+    '🍎',
+    '🍌',
+    '🍉',
+    '🍇',
+    '🍓',
+    '🍒',
+    '🍍',
+    '🥭',
+    '🍑',
+    '🍆',
+    '🌽',
+    '🥕',
+    '🍔',
+    '🍟',
+    '🍕',
+    '🌭',
+    '🍿',
+    '🥗',
+    '🍩',
+    '🍪',
+    '🍫',
+    '🍭',
+    '🍺',
+    '🍷',
+    '🥂',
+    '☕',
+    '🍵',
+    '🍼',
+    '🍶',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        Container(
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.white38,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: GridView.count(
+            crossAxisCount: 8,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            padding: const EdgeInsets.all(12),
+            children:
+                _emojis.map((e) {
+                  return GestureDetector(
+                    onTap: () => onEmojiSelected(e),
+                    child: Center(
+                      child: Text(e, style: const TextStyle(fontSize: 24)),
+                    ),
+                  );
+                }).toList(),
+          ),
+        ),
+      ],
     );
   }
 }

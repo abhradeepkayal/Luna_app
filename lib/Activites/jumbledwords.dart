@@ -19,41 +19,89 @@ class JumbledWordsApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFF2B2B2B),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2B2B2B),
-          titleTextStyle: TextStyle(
+        appBarTheme: AppBarTheme(
+          backgroundColor: const Color(0xFF2B2B2B),
+          elevation: 4,
+          titleTextStyle: const TextStyle(
             fontFamily: 'AtkinsonHyperlegible',
             fontSize: 26,
             fontWeight: FontWeight.bold,
             color: Color(0xFFFAF3E0),
+            shadows: [
+              Shadow(
+                offset: Offset(0, 2),
+                blurRadius: 3,
+                color: Color(0xFF000000),
+              ),
+            ],
           ),
-          iconTheme: IconThemeData(color: Color(0xFFFAF3E0)),
+          iconTheme: const IconThemeData(color: Color(0xFFFAF3E0)),
         ),
         textTheme: const TextTheme(
           bodyLarge: TextStyle(
             fontFamily: 'OpenDyslexic',
             color: Color(0xFFFAF3E0),
             fontSize: 18,
+            shadows: [
+              Shadow(
+                offset: Offset(0, 1),
+                blurRadius: 2,
+                color: Colors.black54,
+              ),
+            ],
           ),
           bodyMedium: TextStyle(
             fontFamily: 'OpenDyslexic',
             color: Color(0xFFFAF3E0),
             fontSize: 16,
+            shadows: [
+              Shadow(
+                offset: Offset(0, 1),
+                blurRadius: 2,
+                color: Colors.black54,
+              ),
+            ],
           ),
           titleLarge: TextStyle(
             fontFamily: 'AtkinsonHyperlegible',
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Color(0xFFFAF3E0),
+            shadows: [
+              Shadow(
+                offset: Offset(0, 2),
+                blurRadius: 3,
+                color: Colors.black87,
+              ),
+            ],
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF3C3C3C),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             textStyle: const TextStyle(
               fontFamily: 'OpenDyslexic',
               fontSize: 18,
             ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0xFFFFBF00), width: 1),
+            ),
+            elevation: 5,
+            shadowColor: Colors.black87,
+          ),
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          labelStyle: TextStyle(
+            fontFamily: 'OpenDyslexic',
+            color: Color(0xFFFAF3E0),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFFFFBF00)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFFFFBF00), width: 2),
           ),
         ),
       ),
@@ -106,7 +154,6 @@ class _LevelsPageState extends State<LevelsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Transparent app bar over the background
       appBar: AppBar(
         title: const Text("Jumbled Words Game"),
         backgroundColor: Colors.transparent,
@@ -140,7 +187,7 @@ class _LevelsPageState extends State<LevelsPage> {
                   child: ListView.builder(
                     padding: const EdgeInsets.only(bottom: 20),
                     itemCount: 30,
-                    itemExtent: 120.0, // ~5 levels per screen
+                    itemExtent: 120.0,
                     itemBuilder: (context, index) {
                       int level = index + 1;
                       bool isUnlocked = level <= unlockedLevel;
@@ -154,16 +201,38 @@ class _LevelsPageState extends State<LevelsPage> {
                           elevation: 5,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(
+                              color: Color(0xFFFFBF00),
+                              width: 1,
+                            ),
                           ),
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(16.0),
-                            leading: Icon(
-                              isUnlocked ? Icons.lock_open : Icons.lock,
-                              size: 36,
-                              color:
-                                  isUnlocked
-                                      ? const Color(0xFFFAF3E0)
-                                      : Colors.redAccent,
+                            leading: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: const Color(0xFFFFBF00),
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    offset: Offset(0, 1),
+                                    blurRadius: 2,
+                                    color: Colors.black45,
+                                  ),
+                                ],
+                                color: const Color(0xFF3C3C3C),
+                              ),
+                              padding: const EdgeInsets.all(6),
+                              child: Icon(
+                                isUnlocked ? Icons.lock_open : Icons.lock,
+                                size: 36,
+                                color:
+                                    isUnlocked
+                                        ? const Color(0xFFFAF3E0)
+                                        : Colors.redAccent,
+                              ),
                             ),
                             title: Text(
                               "Level $level",
@@ -224,7 +293,6 @@ class _JumbledWordsGameState extends State<JumbledWordsGame> {
 
   void _loadNextWord() {
     if (_wordIndex >= _words.length) {
-      // Level complete: all 10 words are done!
       widget.onLevelComplete(widget.level);
       showDialog(
         context: context,
@@ -242,8 +310,8 @@ class _JumbledWordsGameState extends State<JumbledWordsGame> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Dismiss dialog
-                    Navigator.of(context).pop(); // Return to main page
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
                   },
                   child: Text(
                     "Awesome!",
@@ -270,10 +338,8 @@ class _JumbledWordsGameState extends State<JumbledWordsGame> {
     return characters.join();
   }
 
-  // Updated _checkAnswer function using AI to validate the answer.
   void _checkAnswer() async {
     String userAnswer = _controller.text.trim().toLowerCase();
-    // Call the AI helper to validate if the user's answer is a correct unscrambling
     bool isValid = await AIHelper.validateAnswer(_jumbledWord, userAnswer);
     if (isValid) {
       ScaffoldMessenger.of(
@@ -290,10 +356,8 @@ class _JumbledWordsGameState extends State<JumbledWordsGame> {
     _controller.clear();
   }
 
-  // Speak the jumbled word letter by letter at a slower rate
   void _speakWord() async {
     String letterByLetter = _jumbledWord.split('').join(' ');
-    // Set a slower speech rate and select a mature female voice (adjust as available)
     await _flutterTts.setSpeechRate(0.3);
     await _flutterTts.setVoice({"name": "Samantha", "locale": "en-US"});
     await _flutterTts.speak(letterByLetter);
@@ -319,7 +383,6 @@ class _JumbledWordsGameState extends State<JumbledWordsGame> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      // Wrap content in a SingleChildScrollView to avoid overflow when the keyboard opens
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Container(
@@ -337,15 +400,14 @@ class _JumbledWordsGameState extends State<JumbledWordsGame> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                if (_isLoading)
-                  const CircularProgressIndicator()
-                else
-                  Text(
-                    "Jumbled Word: $_jumbledWord",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleLarge?.copyWith(fontSize: 28),
-                  ),
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : Text(
+                      "Jumbled Word: $_jumbledWord",
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleLarge?.copyWith(fontSize: 28),
+                    ),
                 const SizedBox(height: 20),
                 TextField(
                   controller: _controller,
@@ -356,17 +418,7 @@ class _JumbledWordsGameState extends State<JumbledWordsGame> {
                   ),
                   decoration: const InputDecoration(
                     labelText: "Your Answer",
-                    labelStyle: TextStyle(
-                      fontFamily: 'OpenDyslexic',
-                      color: Color(0xFFFAF3E0),
-                    ),
                     border: OutlineInputBorder(),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFFAF3E0)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFFFAF3E0)),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -427,9 +479,6 @@ class AIHelper {
     return words;
   }
 
-  // New helper method to validate the user's answer.
-  // It sends the jumbled word and the user’s answer to the AI model.
-  // The prompt instructs the model to respond with only "yes" or "no".
   static Future<bool> validateAnswer(
     String jumbledWord,
     String userAnswer,
