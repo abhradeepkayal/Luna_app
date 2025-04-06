@@ -1,5 +1,3 @@
-// lib/pages/swifty_journal.dart
-
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -47,11 +45,11 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
   static const Color bgColor = Color(0xFF121212);
   static const Color accentColor = Color(0xFFFFBF00);
   static const Color textColor = Color(0xFFFAF3E0);
-  static const Color userBubbleColor = Color(0xFFCC9A00); // dark yellow
-  static const Color suraBubbleColor = Color(0xFFD81B60); // pink
+  static const Color userBubbleColor = Color(0xFFCC9A00);
+  static const Color suraBubbleColor = Color(0xFFD81B60);
   static const Color userBorder = Color(0xFFB58900);
   static const Color suraBorder = Color(0xFF880E4F);
-  static const Color cardColor = Color(0xFF1E1E1E); // Define cardColor
+  static const Color cardColor = Color(0xFF1E1E1E);
 
   @override
   void initState() {
@@ -65,12 +63,11 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
     final u = FirebaseAuth.instance.currentUser;
     if (u == null) return;
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final old =
-        await _firestore
-            .collection('chat_journals')
-            .where('uid', isEqualTo: u.uid)
-            .where('date', isLessThan: today)
-            .get();
+    final old = await _firestore
+        .collection('chat_journals')
+        .where('uid', isEqualTo: u.uid)
+        .where('date', isLessThan: today)
+        .get();
     for (var d in old.docs) {
       await FirebaseFirestore.instance
           .collection('journal_history')
@@ -186,18 +183,17 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
 
     Widget _buildImages() {
       return Column(
-        children:
-            imgs
-                .map(
-                  (p) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(File(p), fit: BoxFit.cover),
-                    ),
-                  ),
-                )
-                .toList(),
+        children: imgs
+            .map(
+              (p) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(File(p), fit: BoxFit.cover),
+                ),
+              ),
+            )
+            .toList(),
       );
     }
 
@@ -206,8 +202,8 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (isSura)
-          CircleAvatar(
-            backgroundImage: const AssetImage("assets/images/Sura_f.jpg"),
+          const CircleAvatar(
+            backgroundImage: AssetImage("assets/images/Sura_f.jpg"),
             radius: 20,
           ),
         if (isSura) const SizedBox(width: 8),
@@ -260,29 +256,36 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
   @override
   Widget build(BuildContext context) {
     final u = FirebaseAuth.instance.currentUser;
-    if (u == null)
+    if (u == null) {
       return Scaffold(
         body: Center(
           child: Text("Please sign in", style: TextStyle(color: textColor)),
         ),
       );
+    }
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final stream =
-        _firestore
-            .collection('chat_journals')
-            .where('uid', isEqualTo: u.uid)
-            .where('date', isEqualTo: today)
-            .orderBy('timestamp')
-            .snapshots();
+    final stream = _firestore
+        .collection('chat_journals')
+        .where('uid', isEqualTo: u.uid)
+        .where('date', isEqualTo: today)
+        .orderBy('timestamp')
+        .snapshots();
+
+    // Use MediaQuery to get the top padding (battery/notch area)
+    final topPadding = MediaQuery.of(context).padding.top;
+    // Set the AppBar height as the top padding plus the standard 56px
+    final appBarHeight = topPadding + 56;
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80),
+        preferredSize: Size.fromHeight(appBarHeight),
         child: AppBar(
           backgroundColor: bgColor,
           elevation: 0,
-          flexibleSpace: SafeArea(
+          // Instead of using SafeArea, we add manual top padding
+          flexibleSpace: Padding(
+            padding: EdgeInsets.only(top: topPadding),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: const BoxDecoration(
@@ -340,10 +343,11 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: stream,
               builder: (c, snap) {
-                if (snap.hasError)
+                if (snap.hasError) {
                   return Center(
                     child: Text("Error", style: TextStyle(color: textColor)),
                   );
+                }
                 if (snap.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(
@@ -377,51 +381,49 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: _attachedImages.length,
-                itemBuilder:
-                    (_, i) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              _attachedImages[i],
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Positioned(
-                            top: -4,
-                            right: -4,
-                            child: GestureDetector(
-                              onTap:
-                                  () => setState(
-                                    () => _attachedImages.removeAt(i),
-                                  ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Colors.black45,
-                                      offset: Offset(1, 1),
-                                      blurRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                itemBuilder: (_, i) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          _attachedImages[i],
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: GestureDetector(
+                          onTap: () => setState(
+                            () => _attachedImages.removeAt(i),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black45,
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           Container(
