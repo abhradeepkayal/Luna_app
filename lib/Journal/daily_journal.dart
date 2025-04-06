@@ -1,4 +1,4 @@
-// lib/pages/daily_journal.dart
+
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -36,24 +36,24 @@ class DailyJournalPage extends StatefulWidget {
 }
 
 class _DailyJournalPageState extends State<DailyJournalPage> {
-  // Controllers & services
+  
   final _controller = TextEditingController();
   final _tts = FlutterTts();
   late stt.SpeechToText _speech;
 
-  // UI state
+  
   bool _showWrite = true, _listening = false, _speaking = false;
   bool _bold = false, _italic = false;
   String _mood = '';
   final List<String> _images = [];
 
-  // Emoji list
+  
   static const _emojis = [
     '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
-    // ... (rest omitted for brevity)
+    
   ];
 
-  // Theme colors
+  
   static const Color bgColor = Color(0xFF121212);
   static const Color cardColor = Color(0xFF1E1E1E);
   static const Color accentColor = Color(0xFFFFBF00);
@@ -378,7 +378,7 @@ class _DailyJournalPageState extends State<DailyJournalPage> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Write/Edit header
+              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -408,11 +408,11 @@ class _DailyJournalPageState extends State<DailyJournalPage> {
               if (_showWrite) ...[
                 const SizedBox(height: 16),
 
-                // Mood selector
+                
                 _moodSelector(),
                 const SizedBox(height: 16),
 
-                // Toolbar
+                
                 Container(
                   decoration: BoxDecoration(
                     color: cardColor,
@@ -466,7 +466,7 @@ class _DailyJournalPageState extends State<DailyJournalPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Text field
+               
                 Container(
                   decoration: BoxDecoration(
                     color: cardColor,
@@ -500,7 +500,7 @@ class _DailyJournalPageState extends State<DailyJournalPage> {
 
               const SizedBox(height: 24),
 
-              // Preview
+             
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -573,7 +573,7 @@ class _DailyJournalPageState extends State<DailyJournalPage> {
 
               const SizedBox(height: 32),
 
-              // Save button
+              
               ElevatedButton(
                 onPressed: _save,
                 style: ElevatedButton.styleFrom(
