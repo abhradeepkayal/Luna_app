@@ -4,7 +4,7 @@ import 'task_model.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-//import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+
 import 'package:speech_to_text/speech_to_text.dart';
 import 'task_firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -42,11 +42,11 @@ class _TaskInputWidgetState extends State<TaskInputWidget> {
     _firestoreService = TaskFirestoreService();
     _speech.initialize();
 
-    // 1) Initialize local notifications plugin.
+    
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
-      // for iOS < 10 you can also handle onDidReceiveLocalNotification here
+     
     );
     flutterLocalNotificationsPlugin.initialize(
       const InitializationSettings(
@@ -54,20 +54,18 @@ class _TaskInputWidgetState extends State<TaskInputWidget> {
         iOS: iosInit,
       ),
       onDidReceiveNotificationResponse: (response) {
-        // tapped notification
+        
       },
     );
 
-    // 2) Request permissions on both platforms
+    
     _requestNotificationPermissions();
 
-    // 3) Initialize time zones and set local zone
+    
     tz.initializeTimeZones();
-    //FlutterNativeTimezone.getLocalTimezone().then((zone) {
-    //  tz.setLocalLocation(tz.getLocation(zone));
-    //});
+   
 
-    // Listen for task updates.
+    
     _firestoreService.getTasksStream().listen((firebaseTasks) {
       setState(() => tasks = firebaseTasks);
       widget.onTaskListChanged(firebaseTasks);
@@ -83,7 +81,7 @@ class _TaskInputWidgetState extends State<TaskInputWidget> {
     final bool? granted = await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
       ?.requestNotificationsPermission();
-    // you can check granted if you want
+   
   }
 }
 
@@ -185,7 +183,7 @@ class _TaskInputWidgetState extends State<TaskInputWidget> {
 
 
 
-  /// Schedules a one‑time reminder at [dateTime].
+  
 Future<void> scheduleReminder(
     String taskId,
     String taskTitle,
@@ -265,13 +263,11 @@ Future<void> scheduleReminder(
     );
 
     if (tasks.any((task) => task.id == newTask.id)) {
-      return; // Prevent adding duplicate tasks
+      return; 
     }
 
     await _firestoreService.addTask(newTask);
-    // setState(() {
-    //   tasks.add(newTask);
-    // });
+   
     controller.clear();
   }
 
@@ -311,7 +307,7 @@ Future<void> scheduleReminder(
       });
       await _firestoreService.updateTaskWithSubtasks(task.id, task.subtasks);
     } catch (e) {
-      // Handle error gracefully.
+      
     }
   }
 
@@ -396,7 +392,7 @@ Future<void> scheduleReminder(
               ),
             ],
           ),
-          // Temperature slider for AI breakdown complexity
+          
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Column(
