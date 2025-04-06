@@ -440,7 +440,7 @@ class _DailyJournalPageState extends State<DailyJournalPage> {
                             setState(() => _bold = !_bold);
                           }, active: _bold),
                           _iconBtn(Icons.format_italic, () {
-                            controller.text += '_italic';
+                            _controller.text += '_italic';
                             setState(() => _italic = !_italic);
                           }, active: _italic),
                           _iconBtn(Icons.image, _insertImage),
