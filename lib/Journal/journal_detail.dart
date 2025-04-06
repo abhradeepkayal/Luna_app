@@ -1,4 +1,4 @@
-// lib/journal_detail.dart
+
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -21,9 +21,9 @@ class JournalDetailPage extends StatelessWidget {
   static const Color goldenAccent = Color(0xFFFFBF00);
   static const Color darkBackground = Color(0xFF121212);
   static const Color userBubble = goldenAccent;
-  static const Color aiBubble = Color(0xFFFF69B4); // Hot Pink for Sura
-  static const Color userBorder = Color(0xFFB8860B); // Darker gold
-  static const Color aiBorder = Color(0xFF8B004F); // Deep pink border
+  static const Color aiBubble = Color(0xFFFF69B4); 
+  static const Color userBorder = Color(0xFFB8860B); 
+  static const Color aiBorder = Color(0xFF8B004F); 
 
   static const Map<String, String> moodEmojis = {
     'Happy': '😊',
