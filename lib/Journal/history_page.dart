@@ -1,4 +1,4 @@
-// lib/pages/history_page.dart
+
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -155,7 +155,7 @@ class HistoryPage extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      // Leading icon with border
+                      
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -176,7 +176,7 @@ class HistoryPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Texts
+                      
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +209,7 @@ class HistoryPage extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // Trailing arrow
+                     
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
