@@ -271,9 +271,9 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
         .orderBy('timestamp')
         .snapshots();
 
-    // Use MediaQuery to get the top padding (battery/notch area)
+  
     final topPadding = MediaQuery.of(context).padding.top;
-    // Set the AppBar height as the top padding plus the standard 56px
+   
     final appBarHeight = topPadding + 56;
 
     return Scaffold(
@@ -283,7 +283,7 @@ class _SwiftyJournalPageState extends State<SwiftyJournalPage> {
         child: AppBar(
           backgroundColor: bgColor,
           elevation: 0,
-          // Instead of using SafeArea, we add manual top padding
+          
           flexibleSpace: Padding(
             padding: EdgeInsets.only(top: topPadding),
             child: Container(
