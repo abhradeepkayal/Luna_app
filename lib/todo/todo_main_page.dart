@@ -5,10 +5,10 @@ import 'task_input_widget.dart';
 import 'progress_page.dart';
 import 'task_model.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
-//import 'package:firebase_core/firebase_core.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Define the deep golden accent (#FFBF00).
+
 const deepGold = Color(0xFFFFBF00);
 
 class TodoMainPage extends StatefulWidget {
@@ -29,7 +29,7 @@ class _TodoMainPageState extends State<TodoMainPage> {
   }
 
   void _showDailySummary() async {
-    // Build a prompt using all task titles.
+    
     String taskTitles = tasks.map((t) => t.title).join(', ');
     String prompt =
         '''Summarize the following to-do list into a concise daily overview.
@@ -156,7 +156,7 @@ class _TodoMainPageState extends State<TodoMainPage> {
   @override
   void initState() {
     super.initState();
-    // Filter tasks by the current user's UID for uniformity across devices.
+    
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       FirebaseFirestore.instance
@@ -181,7 +181,7 @@ class _TodoMainPageState extends State<TodoMainPage> {
     }
   }
 
-  // Helper widget for app bar icons with a simple border effect.
+  
   Widget _buildIconButton({
     required IconData icon,
     required VoidCallback onPressed,
@@ -250,12 +250,12 @@ class _TodoMainPageState extends State<TodoMainPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          // Everything except the AppBar is scrollable.
+          
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // Header Section with an elevated 3D effect.
+                
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -326,7 +326,7 @@ class _TodoMainPageState extends State<TodoMainPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Task Input and List Section with a raised card effect.
+                
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
