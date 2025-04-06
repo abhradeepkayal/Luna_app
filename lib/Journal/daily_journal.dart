@@ -436,11 +436,11 @@ class _DailyJournalPageState extends State<DailyJournalPage> {
                       Row(
                         children: [
                           _iconBtn(Icons.format_bold, () {
-                            _controller.text += '**bold**';
+                            _controller.text += '*bold*';
                             setState(() => _bold = !_bold);
                           }, active: _bold),
                           _iconBtn(Icons.format_italic, () {
-                            _controller.text += '_italic_';
+                            controller.text += '_italic';
                             setState(() => _italic = !_italic);
                           }, active: _italic),
                           _iconBtn(Icons.image, _insertImage),
@@ -515,12 +515,52 @@ class _DailyJournalPageState extends State<DailyJournalPage> {
                     ),
                   ],
                 ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 16,
+                ),
+                child: const Center(
+                  child: Text(
+                    '👀 Preview',
+                    style: TextStyle(
+                      fontFamily: 'AtkinsonHyperlegible',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: accentColor,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black54,
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: accentColor, width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black45,
+                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
                 padding: const EdgeInsets.all(16),
                 child: MarkdownBody(
                   data: _buildMarkdown().replaceAll('\n', '  \n'),
-                  styleSheet: MarkdownStyleSheet.fromTheme(
-                    Theme.of(context),
-                  ).copyWith(p: const TextStyle(color: textColor)),
+                  styleSheet: MarkdownStyleSheet(
+                    p: const TextStyle(
+                      fontFamily: 'OpenDyslexic',
+                      color: textColor,
+                    ),
+                  ),
                   selectable: false,
                   imageBuilder: (uri, _, __) {
                     final file = File(
