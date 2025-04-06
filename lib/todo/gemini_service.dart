@@ -3,7 +3,7 @@ import 'package:firebase_vertexai/firebase_vertexai.dart';
 
 class GeminiService {
   static final _model = FirebaseVertexAI.instance.generativeModel(
-    model: 'models/gemini-2.0-flash-001', // Use 'gemini-1.5-pro' or 'gemini-2.0-pro' if available
+    model: 'models/gemini-2.0-flash-001', 
   );
 
   static Future<String?> generateTaskBreakdown(String task) async {
