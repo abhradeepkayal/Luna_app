@@ -81,7 +81,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
-    // Check Firestore to see if there are any existing messages.
+    
     _checkAndShowWelcomeMessage();
   }
 
@@ -101,14 +101,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
     super.dispose();
   }
 
-  // Called when returning to this screen.
+  
   @override
   void didPopNext() {
-    // No manual loading needed when using StreamBuilder.
+    
   }
 
-  /// Check if Firestore has any messages for the current user and bot.
-  /// If not, add a welcome message.
+  
   Future<void> _checkAndShowWelcomeMessage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -121,13 +120,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
             .get();
 
     if (snapshot.docs.isEmpty) {
-      // Add the welcome message to Firestore.
+      
       final welcomeText = _welcomeMessages[_botType]!;
       await _saveMessageToFirestore(welcomeText, 'bot', uid);
     }
   }
 
-  /// Send message from the user and then get the bot response.
+  
   Future<void> _sendMessage() async {
     if ((_controller.text.isEmpty && _imagePath == null) || _isSending) return;
     setState(() => _isSending = true);
@@ -135,12 +134,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
     if (user == null) return;
     final uid = user.uid;
 
-    // If an image is selected, save that first.
+    
     if (_imagePath != null) {
       await _firestore
           .collection('chats')
           .add({
-            'text': '', // No text if it's an image message.
+            'text': '',
             'sender': 'user',
             'botType': _botType,
             'uid': uid,
@@ -155,24 +154,24 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
       });
     }
 
-    // Handle user text message.
+    
     final userText = _controller.text.trim();
     if (userText.isNotEmpty) {
       await _saveMessageToFirestore(userText, 'user', uid);
       _controller.clear();
-      // Get and save bot response.
+      
       await _getBotResponse(userText, uid);
     }
     setState(() => _isSending = false);
   }
 
-  /// Call Gemini API for a response and save it.
+  
   Future<void> _getBotResponse(String message, String uid) async {
     final response = await GeminiAPI.getResponse(message, _botType, _vertexAI);
     await _saveMessageToFirestore(response, 'bot', uid);
   }
 
-  /// Save a message to Firestore in the "chats" collection.
+  
   Future<void> _saveMessageToFirestore(
     String text,
     String sender,
@@ -197,7 +196,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
     }
   }
 
-  /// Start speech-to-text listening.
+  
   void _startListening() async {
     if (await _speech.initialize()) {
       setState(() => _isListening = true);
@@ -211,18 +210,18 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
     }
   }
 
-  /// Stop speech-to-text listening.
+  
   void _stopListening() {
     setState(() => _isListening = false);
     _speech.stop();
   }
 
-  /// Use text-to-speech to read aloud a message.
+  
   void _readAloud(String text) async {
     await _flutterTts.speak(text);
   }
 
-  /// Pick an image from the gallery.
+  
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     setState(() => _isImageLoading = true);
@@ -235,13 +234,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
     setState(() => _isImageLoading = false);
   }
 
-  /// Switch between bot types.
+  
   void _switchBotType(String type) {
     setState(() {
       _botType = type;
       _imagePath = null;
     });
-    // Check if a welcome message is needed for the new bot type.
+    
     _checkAndShowWelcomeMessage();
   }
 
@@ -255,7 +254,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
     }
     final uid = user.uid;
 
-    // Use StreamBuilder to automatically load and update messages from Firestore.
+    
     final messagesStream =
         _firestore
             .collection('chats')
@@ -346,7 +345,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
                     final data = docs[index].data() as Map<String, dynamic>;
-                    // Build ChatMessage widget from Firestore data.
+                    
                     return ChatMessage(
                       text: data['text'] ?? '',
                       sender: data['sender'] == 'bot' ? _botType : 'user',
@@ -395,7 +394,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: () {
-                    // Since messages are loaded via StreamBuilder, manual clearing is not needed.
+                    
                     debugPrint('Refresh pressed.');
                   },
                 ),
@@ -429,7 +428,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
   }
 }
 
-/// ChatMessage widget displays a single message bubble.
+
 class ChatMessage extends StatelessWidget {
   final String text;
   final String sender;
@@ -500,7 +499,7 @@ class ChatMessage extends StatelessWidget {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  // Sign in anonymously if needed.
+  
   if (FirebaseAuth.instance.currentUser == null) {
     await FirebaseAuth.instance.signInAnonymously();
   }
