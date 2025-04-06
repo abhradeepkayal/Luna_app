@@ -57,5 +57,43 @@
 - **And More:**  
   Stay tuned for continuous improvements and new features.
 
+Below is the exact "How to Install" section you can copy and paste directly into your `README.md`:
 
+```markdown
+## Installation
+
+### Prerequisites
+- [Flutter](https://flutter.dev/docs/get-started/install) installed on your machine.
+- A Firebase account for backend setup.
+- Gemini API and Vertex AI credentials.
+
+### Steps
+
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/abhradeepkayal/Luna_app.git
+   cd Luna_app
+   ```
+
+2. **Install Dependencies:**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Set Up Environment Variables:**
+   - Create a file named `.env` in the root directory of the project.
+   - Add your API keys and credentials in the `.env` file. For example:
+     ```env
+     GEMINI_API_KEY=AIzaSyC8aoDt6_PM5i9_xz7AlHBo720SU_nAHSY
+     ```
+   - Ensure your project is configured to read the `.env` file (using a package like [flutter_dotenv](https://pub.dev/packages/flutter_dotenv) is recommended).
+
+4. **Configure Firebase:**
+   - Follow the Firebase setup instructions for Flutter to connect your project to your Firebase account.
+
+5. **Run the App:**
+   ```bash
+   flutter run
+   ```
+``` 
 
