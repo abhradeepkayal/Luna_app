@@ -82,7 +82,7 @@ class _VerificationPendingScreenState extends State<VerificationPendingScreen> {
           IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Navigator.pop(context); // Navigate back to login/signup screen
+              Navigator.pop(context); 
             },
           ),
         ],
