@@ -7,7 +7,7 @@ class Task {
   final DateTime date;
   bool isCompleted;
   final String uid;
-  List<Map<String, dynamic>> subtasks; // Each subtask is a map with keys 'title' and 'isCompleted'
+  List<Map<String, dynamic>> subtasks; 
 
   Task({
     required this.id,
@@ -32,7 +32,7 @@ class Task {
 
   factory Task.fromMap(Map<String, dynamic> map, {String? id}) {
     DateTime parsedDate;
-    // Support both String and Timestamp for the date field.
+   
     if (map['date'] is String) {
       parsedDate = DateTime.parse(map['date'] as String);
     } else if (map['date'] is Timestamp) {
@@ -41,7 +41,7 @@ class Task {
       parsedDate = DateTime.now();
     }
     
-    // Process the subtasks field: It may be a List<String> or a List<Map<String, dynamic>>
+    
     List<Map<String, dynamic>> processedSubtasks = [];
     if (map['subtasks'] is List) {
       final rawSubtasks = map['subtasks'] as List;
