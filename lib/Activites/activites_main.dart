@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'jumbledwords.dart'; // Make sure this file has `JumbledWordsPage` widget.
-import 'puzzles.dart'; // Make sure this file has `PuzzlesPage` widget.
-
+import 'jumbledwords.dart'; 
+import 'puzzles.dart'; 
 class ActivitesMain extends StatelessWidget {
   const ActivitesMain({super.key});
 
