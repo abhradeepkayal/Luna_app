@@ -1,11 +1,11 @@
-// ignore_for_file: library_private_types_in_public_api
+
 
 import 'package:flutter/material.dart';
 import 'task_model.dart';
 import 'task_firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Define the deep golden accent (#FFBF00).
+
 const deepGold = Color(0xFFFFBF00);
 
 class ProgressPage extends StatefulWidget {
@@ -73,7 +73,7 @@ class _ProgressPageState extends State<ProgressPage> {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // Stat Cards Row
+                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -86,7 +86,7 @@ class _ProgressPageState extends State<ProgressPage> {
                   ],
                 ),
                 const SizedBox(height: 30),
-                // Progress Bar Section inside a Card-like container
+                
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[850],
@@ -137,7 +137,7 @@ class _ProgressPageState extends State<ProgressPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                // Encouragement Message
+                
                 const Text(
                   "🚀 Keep going! You're doing great!",
                   style: TextStyle(
