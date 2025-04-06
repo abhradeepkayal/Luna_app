@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo and app name
+               
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // Login title
+                
                 Text(
                   'Login',
                   style: TextStyle(
@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 40),
 
-                // Email field
+                
                 _buildInputField(
                   label: 'Email',
                   controller: _emailController,
@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
-                // Password field
+               
                 _buildInputField(
                   label: 'Password',
                   controller: _passwordController,
@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
-                // Login Button
+                
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
-                // Sign up prompt
+                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
