@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } else {
       await Navigator.pushNamed(context, _routes[index]);
-      // Reset selection to Home after returning.
+      
       setState(() {
         _currentIndex = 0;
       });
@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
       currentIndex: _currentIndex,
       onTap: _onNavTapped,
       showSelectedLabels: true,
-      showUnselectedLabels: true, // Now every icon shows its label.
+      showUnselectedLabels: true, 
       selectedLabelStyle: const TextStyle(fontFamily: 'OpenDyslexic'),
       items: [
         BottomNavigationBarItem(
