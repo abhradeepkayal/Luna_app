@@ -1,4 +1,4 @@
-// lib/pages/mind_dump_page.dart
+
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -366,7 +366,7 @@ class _MindDumpPageState extends State<MindDumpPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Text Field
+               
                 Container(
                   decoration: BoxDecoration(
                     color: cardColor,
@@ -398,7 +398,7 @@ class _MindDumpPageState extends State<MindDumpPage> {
                 ),
               ],
               const SizedBox(height: 32),
-              // Preview Header
+             
               Container(
                 decoration: BoxDecoration(
                   color: cardColor,
@@ -436,7 +436,7 @@ class _MindDumpPageState extends State<MindDumpPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Markdown Preview
+             
               Container(
                 decoration: BoxDecoration(
                   color: cardColor,
