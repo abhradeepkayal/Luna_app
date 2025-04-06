@@ -1,4 +1,4 @@
-// lib/pages/journal_main.dart
+
 
 import 'package:flutter/material.dart';
 import 'mind_dump.dart';
@@ -89,7 +89,7 @@ class _MainJournalPageState extends State<MainJournalPage>
 
   @override
   Widget build(BuildContext context) {
-    // Build the 14 page asset paths:
+    
     final pages = List.generate(14, (i) {
       final num = (i + 1).toString().padLeft(4, '0');
       return 'assets/images/journalguide_pages-to-jpg-$num.jpg';
