@@ -19,7 +19,7 @@ class CalmingMusicHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Background video remains intact.
+        
         VideoBackground(videoPath: "assets/videos/main_bg.mp4"),
         Scaffold(
           backgroundColor: Colors.transparent,
@@ -30,7 +30,7 @@ class CalmingMusicHome extends StatelessWidget {
               "Calming Visuals & Music",
               style: const TextStyle(
                 fontFamily: 'AtkinsonHyperlegible',
-                color: Color(0xFFFFBF00), // Golden accent for the title
+                color: Color(0xFFFFBF00), 
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 shadows: [
