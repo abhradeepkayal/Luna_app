@@ -164,65 +164,11 @@ class ScenarioScreen extends StatelessWidget {
               }).toList(),
         ),
       ),
-      //bottomNavigationBar: _buildDynamicBottomNavBar(context),
+      
     );
   }
 
-  // Widget _buildDynamicBottomNavBar(BuildContext context) {
-  //   return BottomNavigationBar(
-  //     backgroundColor: const Color(0xFF121212),
-  //     selectedItemColor: const Color(0xFFFFBF00),
-  //     unselectedItemColor: Colors.grey,
-  //     type: BottomNavigationBarType.fixed,
-  //     currentIndex: 0,
-  //     onTap: (index) {
-  //       switch (index) {
-  //         case 0:
-  //           Navigator.pushNamedAndRemoveUntil(
-  //             context,
-  //             '/home',
-  //             (route) => false,
-  //           );
-  //           break;
-  //         case 1:
-  //           Navigator.pushNamed(context, '/forum');
-  //           break;
-  //         case 2:
-  //           Navigator.pushNamed(context, '/search');
-  //           break;
-  //         case 3:
-  //           Navigator.pushNamed(context, '/chatbot');
-  //           break;
-  //         case 4:
-  //           Navigator.pushNamed(context, '/profile');
-  //           break;
-  //       }
-  //     },
-  //     elevation: 10,
-  //     selectedLabelStyle: const TextStyle(fontFamily: 'AtkinsonHyperlegible'),
-  //     items: [
-  //       _buildNavItem(Icons.home, 'Home'),
-  //       _buildNavItem(Icons.people_outline, 'Forum'),
-  //       _buildNavItem(Icons.search, 'Search'),
-  //       _buildNavItem(Icons.chat_bubble_outline, 'Chatbot'),
-  //       _buildNavItem(Icons.person_outline, 'Profile'),
-  //     ],
-  //   );
-  // }
-
-  // BottomNavigationBarItem _buildNavItem(IconData iconData, String label) {
-  //   return BottomNavigationBarItem(
-  //     icon: Container(
-  //       padding: const EdgeInsets.all(4),
-  //       decoration: BoxDecoration(
-  //         border: Border.all(color: const Color(0xFFFFBF00), width: 1),
-  //         borderRadius: BorderRadius.circular(8),
-  //       ),
-  //       child: Icon(iconData),
-  //     ),
-  //     label: label,
-  //   );
-  // }
+ 
 }
 
 class VideoScreen extends StatefulWidget {
