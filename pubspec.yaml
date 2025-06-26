@@ -1,7 +1,13 @@
 name: Luna
-description: "A new Flutter project."
+description: "Luna – AI-powered mental wellness companion designed for neurodiverse users (ADHD, autism, dyslexia). Offers speech therapy, mood-based chatbots, journaling, task management, games, calming sounds, and community support to help you thrive daily. Built with Flutter, Firebase, and Gemini AI."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
+authors:
+  - Abhradeep Kayal <kayal.abhradeep04@gmail.com>
+  - Aditya Shaw <adityawcode@gmail.com>
+  - Yash Agarwal <yashagarwal7088@gmail.com>
+  - Anik Chakraborty <anik.newme@gmail.com>
+
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
