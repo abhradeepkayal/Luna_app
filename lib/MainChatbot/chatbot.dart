@@ -271,7 +271,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircleAvatar(
-                backgroundImage: AssetImage('assets/avatars/$_botType.png'),
+                backgroundImage: AssetImage('assets/images/$_botType.jpg'),
               ),
               const SizedBox(width: 8),
               Text(_botType),
@@ -295,7 +295,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> with RouteAware {
                           children: [
                             CircleAvatar(
                               backgroundImage: AssetImage(
-                                'assets/avatars/${bot['name']}.png',
+                                'assets/images/${bot['name']}.png',
                               ),
                             ),
                             const SizedBox(width: 8),
