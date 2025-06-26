@@ -108,8 +108,9 @@ flutter:
   assets:
     - assets/splash_video.mp4
     - assets/images/toDo.gif
-    - assets/images/funny_bot.jpg
-    - assets/images/chill_guy.jpg
+    - assets/images/Emma.jpg
+    - assets/images/Chill Guy.jpg
+    - assets/images/Patrick.jpg
     - assets/images/Journal.png
     - assets/images/Jumble.png
     - assets/images/doctor.png
