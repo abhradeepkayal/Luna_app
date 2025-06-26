@@ -84,7 +84,7 @@ Below is the exact "How to Install" section you can copy and paste directly into
    - Create a file named `.env` in the root directory of the project.
    - Add your API keys and credentials in the `.env` file. For example:
      ```env
-     GEMINI_API_KEY=AIzaSyC8aoDt6_PM5i9_xz7AlHBo720SU_nAHSY
+     GEMINI_API_KEY="Your gemini api key"
      ```
    - Ensure your project is configured to read the `.env` file (using a package like [flutter_dotenv](https://pub.dev/packages/flutter_dotenv) is recommended).
 
