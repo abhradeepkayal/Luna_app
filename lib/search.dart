@@ -17,8 +17,7 @@ import 'package:Luna/Journal/mind_dump.dart';
 import 'package:Luna/Journal/swifty_journal.dart';
 import 'package:Luna/MainChatbot/chatbot.dart';
 import 'package:Luna/profile.dart';
-import 'package:Luna/Journal/journal_main.dart'; // Must define const JournalMain()
-
+import 'package:Luna/Journal/journal_main.dart'; 
 class SearchPage extends StatefulWidget {
   const SearchPage({Key? key}) : super(key: key);
 
@@ -29,7 +28,7 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
 
-  // List of features.
+  
   final List<String> _allFeatures = [
     "Chatbot",
     "Journaling",
@@ -52,7 +51,7 @@ class _SearchPageState extends State<SearchPage> {
 
   List<String> _filteredFeatures = [];
 
-  // Map feature names to their specific page builder.
+  
   final Map<String, Widget Function()> _featureRoutes = {
     "Journaling": () => const JournalMain(),
     "Activities": () => const ActivitesMain(),
@@ -73,7 +72,7 @@ class _SearchPageState extends State<SearchPage> {
     "Puzzles": () => const PuzzlesPage(),
   };
 
-  // Speech-to-text objects and states.
+  
   late stt.SpeechToText _speech;
   bool _isListening = false;
 
@@ -109,7 +108,7 @@ class _SearchPageState extends State<SearchPage> {
         MaterialPageRoute(builder: (context) => _featureRoutes[feature]!()),
       );
     } else {
-      // Feature not yet implemented.
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Feature '$feature' is not available yet.")),
       );
@@ -139,7 +138,7 @@ class _SearchPageState extends State<SearchPage> {
               );
             });
           },
-          localeId: 'en_US', // Change locale if needed.
+          localeId: 'en_US', 
         );
       }
     } else {
@@ -150,7 +149,7 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Enhanced background color and attractive theme.
+    
     return Scaffold(
       backgroundColor: Colors.grey[900],
       body: SafeArea(
@@ -158,7 +157,7 @@ class _SearchPageState extends State<SearchPage> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Glassmorphic search bar.
+              
               ClipRRect(
                 borderRadius: BorderRadius.circular(20.0),
                 child: BackdropFilter(
@@ -223,7 +222,7 @@ class _SearchPageState extends State<SearchPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Display filtered list of features.
+              
               Expanded(
                 child:
                     _filteredFeatures.isNotEmpty
