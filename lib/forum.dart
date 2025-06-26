@@ -6,7 +6,7 @@ class ForumPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E), // Greyish-Black background
+      backgroundColor: const Color(0xFF1E1E1E), 
       appBar: AppBar(
         title: Text(
           "FORUM",
@@ -14,7 +14,7 @@ class ForumPage extends StatelessWidget {
             fontFamily: 'AtkinsonHyperlegible',
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Color(0xFFF5EBDC), // Creamy-White text
+            color: Color(0xFFF5EBDC),
             shadows: [
               Shadow(
                 blurRadius: 3,
