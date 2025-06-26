@@ -57,7 +57,6 @@
 - **And More:**  
   Stay tuned for continuous improvements and new features.
 
-Below is the exact "How to Install" section you can copy and paste directly into your `README.md`:
 
 ```markdown
 ## Installation
