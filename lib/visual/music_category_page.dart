@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'music_model.dart';
 import 'video_background.dart';
 import 'music_player_widget.dart';
-import 'music_data.dart'; // fixed the path to match your folder structure
+import 'music_data.dart'; 
 
 class MusicCategoryPage extends StatelessWidget {
-  final String title; // Category name, like "Soothing"
-  final String videoPath; // Video background path for this category
+  final String title; 
+  final String videoPath; 
 
   const MusicCategoryPage({
     super.key,
@@ -15,7 +15,7 @@ class MusicCategoryPage extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    // Get the list of tracks for the selected category
+    
     final List<MusicModel> musicList = categoryMusicMap[title] ?? [];
 
     return Stack(
