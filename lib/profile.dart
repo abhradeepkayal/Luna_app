@@ -49,7 +49,7 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Profile picture
+                  
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -96,7 +96,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // Glassy About Card
+                 
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: BackdropFilter(
@@ -148,7 +148,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // Rewards & Badges
+                 
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
