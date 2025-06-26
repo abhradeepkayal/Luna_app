@@ -44,6 +44,6 @@ class VideoBackgroundState extends State<VideoBackground> {
               ),
             ),
           )
-        : Container(color: Colors.black); // Placeholder while loading
+        : Container(color: Colors.black); 
   }
 }
