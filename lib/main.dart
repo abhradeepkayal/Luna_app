@@ -22,9 +22,9 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:Luna/profile.dart';
 import 'package:Luna/search.dart';
-import 'package:video_player/video_player.dart'; // Added for splash video
+import 'package:video_player/video_player.dart'; 
 
-// import '../Journal/journal_main.dart';
+
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -33,7 +33,7 @@ Future<void> initializeNotifications() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings(
         '@mipmap/ic_launcher',
-      ); // Make sure you have this icon in your project.
+      ); 
 
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
@@ -47,14 +47,14 @@ Future<void> main() async {
   tz.initializeTimeZones();
   tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
 
-  // Load environment variables safely
+ 
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
     print("Warning: .env file not found or failed to load.");
   }
 
-  // Initialize Firebase
+  
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeNotifications();
 
@@ -81,7 +81,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF121212),
         fontFamily: 'OpenDyslexic',
       ),
-      home: const SplashScreenWrapper(), // Modified to add splash video
+      home: const SplashScreenWrapper(), 
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
@@ -129,7 +129,7 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-// --- Added Splash Video Functionality Below ---
+
 class SplashScreenWrapper extends StatefulWidget {
   const SplashScreenWrapper({super.key});
 
@@ -146,7 +146,7 @@ class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
     super.initState();
     _controller = VideoPlayerController.asset("assets/splash_video.mp4")
       ..initialize().then((_) {
-        setState(() {}); // Refresh to show the initialized video
+        setState(() {}); 
         _controller.play();
       });
     _controller.addListener(() {
